@@ -1,6 +1,6 @@
 var _ = require('underscore')
 var async = require('async')
-
+var Promise = require('bluebird')
 var Modely = null
 var models = {
   tag: {
@@ -30,11 +30,111 @@ var models = {
 }
 
 /**
+ * Assigns default values to a new object that is beign created
+ */
+function assignTagDefaults(Model) {
+  if (typeof Model._data.values._meta.tags === 'undefined') {
+    Model._data.values._meta.tags = []
+  }
+  Model._data.original._meta.tags = []
+}
+
+/**
+ * Parses the original tags on the model to determine if any need to be removed
+ */
+function parseOriginalTags(originalTags, currentTags) {
+  var result = []
+  originalTags.forEach(function (tag) {
+    if (!_.findWhere(currentTags, tag)) {
+      result.push(tag)
+    }
+  })
+  return result
+}
+
+/**
+ * Parses the currently assigned tags to see which need to be added
+ */
+function parseCurrentTags(currentTags, originalTags) {
+  var result = []
+  currentTags.forEach(function (tag) {
+    if (!_.findWhere(originalTags, tag)) {
+      result.push(tag)
+    }
+  })
+  return result
+}
+
+/**
+ * Parses the tags to add to the Model and see if any need to be created
+ */
+function parseTagsToAdd(tags) {
+  return new Promise(function (resolve) {
+    var result = []
+    async.each(
+      tags,
+      function iterator(tag, callback) {
+        if (typeof tag.id === 'undefined' || tag.id <= 0) {
+          tag.name = _.slugify(tag.label)
+          Modely.knex.raw('SELECT * FROM tag WHERE tag_name = ?', [tag.name])
+            .then(function (queryResults) {
+              if (queryResults.rows.length > 0) {
+                tag.id = queryResults.rows[0].tag_id
+                return callback()
+              }
+              result.push(tag)
+              return callback()
+            }).catch(function (error) {
+              Modely.log.error(error)
+            })
+        } else {
+          return callback()
+        }
+      },
+      function done() {
+        resolve(result)
+      })
+  })
+}
+
+/**
+ * Processes the tags to determine which tags to add, remove or create.
+ */
+function getTagOperation(Model) {
+  var originalTags
+  var currentTags
+  var removeTags
+  var addTags
+  return new Promise(function (resolve) {
+    if (Model._action === 'create') {
+      assignTagDefaults(Model)
+    }
+    originalTags = Model._data.original._meta.tags || []
+    currentTags = Model._data.values._meta.tags || []
+    removeTags = parseOriginalTags(originalTags, currentTags)
+    addTags = parseCurrentTags(currentTags, originalTags)
+    parseTagsToAdd(addTags).then(function (createTags) {
+      resolve({
+        create: createTags || [],
+        remove: removeTags,
+        add: addTags
+      })
+    }).catch(function () {
+      resolve({
+        create: [],
+        remove: [],
+        add: []
+      })
+    })
+  })
+}
+
+/**
  * Registers the required models in Modely
  */
 function registerModels() {
-  Object.keys(models).forEach(function (model_name) {
-    Modely.register(model_name, models[model_name])
+  Object.keys(models).forEach(function (modelName) {
+    Modely.register(modelName, models[modelName])
   })
 }
 
@@ -52,14 +152,15 @@ function onDelete(Model) {
 }
 
 /**
- * Added to the Model load query to pull the tagging information into  
+ * Added to the Model load query to pull the tagging information into
  */
 function beforeLoad(Model) {
   if (Model._schema.taggable) {
-    Model._query.select(Modely.knex.raw("(SELECT '[' || array_to_string( array_agg( ('{\"id\":' || tag_id " +
-      "||',\"label\":\"'||tag_label||'\",\"name\":\"'||tag_name||'\"}')), ',')||']' FROM tag LEFT JOIN " +
-      "tag_mapping ON tag.tag_id = tag_mapping_tag_id WHERE tag_mapping_model_id = ? AND " +
-      "tag_mapping_model_name=?) as tags", [Model[Model._primary_key], Model._name]))
+    Model._query.select(Modely.knex.raw('(SELECT \'[\' || array_to_string( array_agg(' +
+    '(\'{"id":\' || tag_id ||\',"label":"\'||tag_label||\'","name":"\'||tag_name||\'"}' +
+    '\')), \',\')||\']\' FROM tag LEFT JOIN tag_mapping ON tag.tag_id = tag_mapping_tag_id ' +
+    'WHERE tag_mapping_model_id = ? AND tag_mapping_model_name=?) as tags',
+    [Model[Model._primary_key], Model._name]))
   }
 }
 
@@ -75,7 +176,8 @@ function afterLoad(Model, row) {
       try {
         Model._row_cache._meta.tags = JSON.parse(row.tags.replace(/\\/g, '\\\\'))
       } catch (err) {
-        Modely.log.error('[MODELY] An error occured will trying to parse the tagging data on "%s"', Model._name)
+        Modely.log.error('[MODELY] An error occured will trying to parse the tagging data on "%s"',
+        Model._name)
         Model.log.error(err)
         Model.log.error(row.tags)
       }
@@ -90,13 +192,14 @@ function afterLoad(Model, row) {
  */
 function beforeSave(Model) {
   if (Model._schema.taggable && (typeof Model._data.values._meta.tags !== 'undefined')) {
-    Model._pending.push(new Promise(function (resolve, reject) {
-      getTagOperation(Model).then(function (tag_changes) {
-        Model._stash.tags = tag_changes
+    Model._pending.push(new Promise(function (resolve) {
+      getTagOperation(Model).then(function (tagChanges) {
+        Model._stash.tags = tagChanges
         resolve()
       }).catch(function (error) {
         delete Model._stash.tags
-        Modely.log.error('An error occured while trying to process the tagging information for "%s"', Model._name)
+        Modely.log.error('An error occured while trying to process the tagging information for ' +
+        '"%s"', Model._name)
         Modely.log.error(error)
       })
     }))
@@ -104,158 +207,58 @@ function beforeSave(Model) {
 }
 
 function onSave(Model) {
+  var mappingsToAdd = []
+  var tags
+  var modelId
+  var modelName
   if (Model._schema.taggable && typeof Model._stash.tags !== 'undefined') {
-    var tags = Model._stash.tags
-    var model_id = Model[Model._primary_key]
-    var model_name = Model._name
-    
+    tags = Model._stash.tags
+    modelId = Model[Model._primary_key]
+    modelName = Model._name
     // Delete removed tags from tag mappings table
     tags.remove.forEach(function (tag) {
       Model._pending_transactions.push(Model.
         _trx('tag_mapping')
         .where('tag_mapping_tag_id', tag.id)
-        .where('tag_mapping_tag_model_id', model_id))
-        .where('tag_mapping_model_name', model_name)
+        .where('tag_mapping_tag_model_id', modelId))
+        .where('tag_mapping_model_name', modelName)
         .del()
     })
-    
     // Create tags needed and add mappings
     tags.create.forEach(function (tag) {
       Model._pending_transactions.push(
         Model._trx.insert({
           tag_label: tag.label,
           tag_name: _.slugify(tag.label)
-        }, 'tag_id').into('tag').then(function (insert_result) {
+        }, 'tag_id').into('tag').then(function (insertResult) {
           Model._trx.insert({
-            tag_mapping_model_name: model_name,
-            tag_mapping_model_id: model_id,
-            tag_mapping_tag_id: insert_result[0]
+            tag_mapping_model_name: modelName,
+            tag_mapping_model_id: modelId,
+            tag_mapping_tag_id: insertResult[0]
           }).into('tag_mapping')
         })
         )
     })
-    var mappings_to_add = []
-    
     // Build array or remaining tags to be added
     tags.add.forEach(function (tag) {
       if (typeof tag.id !== 'undefined') {
-        mappings_to_add.push({
-          tag_mapping_model_name: model_name,
-          tag_mapping_model_id: model_id,
+        mappingsToAdd.push({
+          tag_mapping_model_name: modelName,
+          tag_mapping_model_id: modelId,
           tag_mapping_tag_id: tag.id
         })
       }
     })
-    
-    // Add them to the pending transations 
-    if (mappings_to_add.length > 0) {
-      Model._pending_transactions.push(Model._trx.insert(mappings_to_add).into('tag_mapping'))
+    // Add them to the pending transactions
+    if (mappingsToAdd.length > 0) {
+      Model._pending_transactions.push(Model._trx.insert(mappingsToAdd).into('tag_mapping'))
     }
   }
 }
 
-/**
- * Processes the tags to determine which tags to add, remove or create.
- */
-function getTagOperation(Model) {
-  return new Promise(function (resolve, reject) {
-    if (Model._action === 'create') {
-      assignTagDefaults(Model)
-    }
-    var original_tags = Model._data.original._meta.tags || []
-    var current_tags = Model._data.values._meta.tags || []
-    var remove_tags = parseOriginalTags(original_tags, current_tags)
-    var add_tags = parseCurrentTags(current_tags, original_tags)
-    parseTagsToAdd(add_tags).then(function (create_tags) {
-      resolve({
-        create: create_tags || [],
-        remove: remove_tags,
-        add: add_tags
-      })
-    }).catch(function (result) {
-      resolve({
-        create: [],
-        remove: [],
-        add: []
-      })
-    })
-  })
-}
-
-/**
- * Assigns default values to a new object that is beign created 
- */
-function assignTagDefaults(Model) {
-  if (typeof Model._data.values._meta.tags === 'undefined') {
-    Model._data.values._meta.tags = []
-  }
-  Model._data.original._meta.tags = []
-}
-
-/**
- * Parses the original tags on the model to determine if any need to be removed
- */
-function parseOriginalTags(original_tags, current_tags) {
-  var result = []
-  original_tags.forEach(function (tag) {
-    if (!_.findWhere(current_tags, tag)) {
-      result.push(tag)
-    }
-  })
-  return result
-}
-
-/** 
- * Parses the currently assigned tags to see which need to be added 
- */
-function parseCurrentTags(current_tags, original_tags) {
-  var result = []
-  current_tags.forEach(function (tag) {
-    if (!_.findWhere(original_tags, tag)) {
-      result.push(tag)
-    }
-  })
-  return result
-}
-
-/**
- * Parses the tags to add to the Model and see if any need to be created
- */
-function parseTagsToAdd(tags) {
-  return new Promise(function (resolve, reject) {
-    var result = []
-    async.each(
-      tags,
-      function iterator(tag, callback) {
-        if (typeof tag.id === 'undefined' || tag.id <= 0) {
-          tag.name = _.slugify(tag.label)
-          Modely.knex.raw("SELECT * FROM tag WHERE tag_name = ?", [tag.name])
-            .then(function (query_results) {
-              if (query_results.rows.length > 0) {
-                tag.id = query_results.rows[0].tag_id
-                return callback()
-              } else {
-                result.push(tag)
-                return callback()
-              }
-            }).catch(function (error) {
-              Modely.log.error(error)
-            })
-        } else {
-          return callback()
-        }
-      },
-      function done() {
-        resolve(result)
-      })
-  })
-}
-
-module.exports = function tagging(modely_reference) {
-  
+module.exports = function tagging(modelyReference) {
   // Reference to Model
-  Modely = modely_reference
-  
+  Modely = modelyReference
   // Register the models required for tagging
   registerModels()
   // Register events
@@ -264,7 +267,7 @@ module.exports = function tagging(modely_reference) {
   Modely.on('Model:*:BeforeSave', beforeSave)
   Modely.on('Model:*:OnSave', onSave)
   Modely.on('Model:*:OnDelete', onDelete)
-  Modely.on('Model:tag:BeforeSave', function(Model){
-    
+  Modely.on('Model:tag:BeforeSave', function (Model) {
+    return Model
   })
 }

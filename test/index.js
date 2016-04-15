@@ -85,7 +85,7 @@ function test_read(){
   })
 }
 
-function add_test_data(){
+function add_test_data () {
   return new Promise(function(resolve,reject){
     var complete = 0
     var done = function(){

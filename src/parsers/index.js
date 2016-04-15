@@ -4,8 +4,8 @@ var properties = require('./properties')
 var row = require('./row')
 
 module.exports = {
-  columns : columns,
-  audit : audit,
-  row : row,
-  properties : properties
+  columns: columns,
+  audit: audit,
+  row: row,
+  properties: properties
 }

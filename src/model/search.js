@@ -1,3 +1,6 @@
-module.exports = function model_search(params){
-  
+
+module.exports = function modelSearch(params) {
+  Object.keys(params).forEach(function (param) {
+    return param
+  })
 }

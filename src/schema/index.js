@@ -1,6 +1,5 @@
 
-function schema(){
-  
+function schema() {
 }
 
 module.exports = schema

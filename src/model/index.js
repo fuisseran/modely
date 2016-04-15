@@ -1,33 +1,32 @@
 var async = require('async')
-var utils = require('./util')
-var $create = require('./create')
+var Promise = require('bluebird')
 var $read = require('./read')
+var $create = require('./create')
 var $update = require('./update')
 var $delete = require('./delete')
-var $install = require('./install')
-var $save = require('./save')
 var $extend = require('./extend')
-var parsers = require('../parsers')
+var $install = require('./install')
 var Modely = require('../')
+var basePropertyObject = {}
+var baseProperties
 
 function BaseModel() {
   var _this = this
   // Emit the OnInitialise event
   Modely.emit('Model:' + _this._name + ':OnInitialise', _this)
-  
   // Define the base properties for the Model Object
   _this.$assignProperties(_this._columns)
-  Object.defineProperty(_this, '_meta',{
+  Object.defineProperty(_this, '_meta', {
     enumerable: true,
-    value : {}
+    value: {}
   })
   Object.defineProperties(_this, {
-    _raw_properties : {
-      enumerable:false,
-      value:null
+    _raw_properties: {
+      enumerable: false,
+      value: null
     }
   })
-  //_this.$assignParentProperties()
+  // _this.$assignParentProperties()
   // If the model is auditied assign the audit properties
   if (typeof _this._audit !== 'undefined' && _this._audit !== null) {
     _this.$assignProperties(_this._audit)
@@ -38,25 +37,24 @@ module.exports = BaseModel
 // Common functions for the model
 /**
  * Create the properties for the Model.
- * @param {object} columns - columns to define 
+ * @param {object} columns - columns to define
  */
 function assignProperties(columns) {
   var Model = this
-  Object.keys(columns).forEach(function (property_name) {
-    var column_def = columns[property_name]
-    Object.defineProperty(Model, property_name, {
+  Object.keys(columns).forEach(function (propertyName) {
+    var columnDef = columns[propertyName]
+    Object.defineProperty(Model, propertyName, {
       enumerable: true,       // Required for enumeraiton of the property
       configurable: true,
       get: function () {
-        if(typeof Model._data.values[column_def.name] === 'undefined'){
-          return Model._data.original[column_def.name]
-        } else {
-          return Model._data.values[column_def.name]
+        if (typeof Model._data.values[columnDef.name] === 'undefined') {
+          return Model._data.original[columnDef.name]
         }
+        return Model._data.values[columnDef.name]
       },
       set: function (val) {
-        if (val != Model._data.values[column_def.name]) {
-          Model._data.values[column_def.name] = val
+        if (val !== Model._data.values[columnDef.name]) {
+          Model._data.values[columnDef.name] = val
         }
       }
     })
@@ -66,28 +64,27 @@ function assignProperties(columns) {
     enumerable: true,       // Required for enumeraiton of the property
     configurable: true,
     get: function () {
-      if(typeof Model._data.values._meta === 'undefined'){
+      if (typeof Model._data.values._meta === 'undefined') {
         return Model._data.original._meta
-      } else {
-        return Model._data.values._meta
       }
-    },
+      return Model._data.values._meta
+    }
   })
 }
 
-function processPending(action){
+function processPending(action) {
   var Model = this
   Modely.emit('Model:' + Model._name + ':Before' + action, Model)
-  return new Promise(function(resolve, reject){
+  return new Promise(function (resolve, reject) {
     async.each(Model._pending,
-      function pending_iterator(item, callback) {
+      function pendingIterator(item, callback) {
         item.then(function (err, result) {
           callback(err, result)
         })
       },
-      function pending_done(err, results) {
+      function pendingDone(err, results) {
         Model._pending = []
-        if (err) { 
+        if (err) {
           return reject(err)
         }
         return resolve(results)
@@ -96,35 +93,33 @@ function processPending(action){
   })
 }
 
-function mapModelProperties(){
+function mapModelProperties() {
   var columns = this._columns
   var values = this._data.values
-  var data_obj = {}
-  Object.keys(columns).forEach(function (column_key, index, _array) {
-    var column_name = columns[column_key].name
-    if (typeof values[column_name] !== 'undefined') {
-      data_obj[column_name] = values[column_name]
+  var dataObj = {}
+  Object.keys(columns).forEach(function (columnKey) {
+    var columnName = columns[columnKey].name
+    if (typeof values[columnName] !== 'undefined') {
+      dataObj[columnName] = values[columnName]
     }
   })
-  this._data_object = data_obj
-  return data_obj
-  
+  this._data_object = dataObj
+  return dataObj
 }
 
-function pendingTransactions(action){
+function pendingTransactions(action) {
   var Model = this
   Modely.emit('Model:' + Model._name + ':On' + action, Model)
   if (Model._pending_transactions.length > 0) {
-    return Promise.map(Model._pending_transactions, function (save_transaction) {
-      return save_transaction
+    return Promise.map(Model._pending_transactions, function (saveTransaction) {
+      return saveTransaction
     })
-  } else {
-    return new Promise(function (resolve, reject) { resolve() })
   }
+  return new Promise(function (resolve) { resolve() })
 }
 
 // Definiftions for the base model properties
-var base_properties = [
+baseProperties = [
   ['$create', $create],                         // Creates the model
   ['$read', $read],                             // Reads the model
   ['$update', $update],                         // Updates the model
@@ -137,19 +132,12 @@ var base_properties = [
   ['$pendingTransactions', pendingTransactions] // Executes ther pendign transactions on the model
 ]
 
-// Base properties
-var base_property_object = {}
-
-
-
-base_properties.forEach(function (base_property, index, _array) {
-  base_property_object[base_property[0].toString()] = {
+baseProperties.forEach(function (baseProperty) {
+  basePropertyObject[baseProperty[0].toString()] = {
     enumerable: false,
     writeable: true,
-    value: base_property[1]
+    value: baseProperty[1]
   }
 })
 
-Object.defineProperties(BaseModel.prototype, base_property_object)
-
-
+Object.defineProperties(BaseModel.prototype, basePropertyObject)
