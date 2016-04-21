@@ -5,6 +5,8 @@ var $create = require('./create')
 var $update = require('./update')
 var $delete = require('./delete')
 var $extend = require('./extend')
+var $search = require('./search')
+var $save = require('./save')
 var $install = require('./install')
 var Modely = require('../')
 var basePropertyObject = {}
@@ -120,16 +122,18 @@ function pendingTransactions(action) {
 
 // Definiftions for the base model properties
 baseProperties = [
-  ['$create', $create],                         // Creates the model
-  ['$read', $read],                             // Reads the model
-  ['$update', $update],                         // Updates the model
-  ['$delete', $delete],                         // Deletes the model
-  ['$install', $install],                       // Installs the model
-  ['$extend', $extend],                         // Extends the model
-  ['$assignProperties', assignProperties],      // Defines the propreties on the model
-  ['$processPending', processPending],          // Processes Pending transaciton on the model
-  ['$mapModelProperties', mapModelProperties],  // Creates and insert object for the database
-  ['$pendingTransactions', pendingTransactions] // Executes ther pendign transactions on the model
+  ['$create', $create],                          // Creates the model
+  ['$read', $read],                              // Reads the model
+  ['$update', $update],                          // Updates the model
+  ['$delete', $delete],                          // Deletes the model
+  ['$install', $install],                        // Installs the model
+  ['$save', $save],                              // saves the model
+  ['$extend', $extend],                          // Extends the model
+  ['$assignProperties', assignProperties],       // Defines the propreties on the model
+  ['$processPending', processPending],           // Processes Pending transaciton on the model
+  ['$mapModelProperties', mapModelProperties],   // Creates and insert object for the database
+  ['$pendingTransactions', pendingTransactions], // Executes ther pendign transactions on the model
+  ['$search', $search]                           // Searchs the model
 ]
 
 baseProperties.forEach(function (baseProperty) {

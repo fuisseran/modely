@@ -25,16 +25,16 @@ module.exports = function update(properties) {
     if (properties) {
       parsers.properties(Model, properties)
       if (Model[Model._primary_key] === 'undefined') {
-        // Check if an id has been assigned, ifi t hasn't reject the model
+        // Check if an id has been assigned, if it hasn't reject the model
         reject(new Error('NoIdSupplied'))
       }
     }
-    Model._status = 'updating'
     // Copy ._meta to ._data.values._meta
     Model._data.values._meta = Model._meta
     // Check the model is loaded before calling the update
     checkModelIsLoaded(Model).then(function () {
       var dataObject = Model.$mapModelProperties(Model)
+      Model._status = 'updating'
       // Check if the Model is audited and apply audit information
       if (Model._schema.audit && typeof Model.$user !== 'undefined' && Model.$user !== null) {
         utils.setAuditModified(Model, dataObject)
@@ -68,7 +68,7 @@ module.exports = function update(properties) {
           })
         })
       })
-    }).then(resolve).catch(function (error) {
+    }).catch(function (error) {
       Model.log.error(error)
       reject(error)
     })

@@ -15,5 +15,11 @@ Modely.register('account', {
   audit: true,
   indexes: [],
   defaults: {
-  }
+  },
+  relationships: [
+    {
+      type: 'many-to-many',
+      target: 'person'
+    }
+  ]
 })

@@ -83,21 +83,43 @@ function oneToOne(modelName, args) {
     if (newColumn) {
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
     }
-    if (typeof Modely.relationships[modelName] === 'undefined') {
-      Modely.relationships[modelName] = {}
+    if (typeof Modely.relationships[args.source.model] === 'undefined') {
+      Modely.relationships[args.source.model] = {}
     }
-    origin = args.source.model === modelName ? args.source.model : args.target.model
-    if (typeof Modely.relationships[modelName][origin] === 'undefined') {
+    if (typeof Modely.relationships[args.target.model] === 'undefined') {
+      Modely.relationships[args.target.model] = {}
+    }
+    if (typeof Modely.relationships[args.source.model][args.target.model] === 'undefined') {
       Modely.relationships[modelName][origin] = {
         type: 'one-to-one',
         source: args.source,
         target: args.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' LEFT OUTER JOIN ' + origin + ' ON ' + args.source.column.fullname + ' = ' +
-            args.target.column.fullname + ' '
+            return ' LEFT OUTER JOIN ' + args.source.model + ' ON ' + args.source.column.fullname +
+            ' = ' + args.target.column.fullname + ' '
           }
-          knexObj.leftOuterJoin(origin, args.source.column.fullname, args.target.column.fullname)
+          knexObj.leftOuterJoin(args.source.model, args.source.column.fullname,
+          args.target.column.fullname)
+        }
+      }
+      Modely.log.debug('[Modely] Added "one-to-one" relationship from "%s.%s" to "%s.%s"',
+      args.source.model, args.source.column, args.target.model, args.target.column)
+    } else {
+      // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
+    }
+    if (typeof Modely.relationships[args.target.model][args.source.model] === 'undefined') {
+      Modely.relationships[modelName][origin] = {
+        type: 'one-to-one',
+        source: args.source,
+        target: args.target,
+        join: function (knexObj) {
+          if (typeof knekObj === 'undefined') {
+            return ' LEFT OUTER JOIN ' + args.target.model + ' ON ' + args.source.column.fullname +
+            ' = ' + args.target.column.fullname + ' '
+          }
+          knexObj.leftOuterJoin(args.target.model, args.source.column.fullname,
+          args.target.column.fullname)
         }
       }
       Modely.log.debug('[Modely] Added "one-to-one" relationship from "%s.%s" to "%s.%s"',
