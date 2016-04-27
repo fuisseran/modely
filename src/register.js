@@ -12,7 +12,7 @@ function register(name, properties) {
   // Normalise the model name needs to be looked at again
   // name = name
   // Emit event for before model registration
-  Modely.emit('beforeRegistration', name, properties)
+  Modely.emit('BeforeRegistration', name, properties)
   // process the model properties
   if (typeof Modely.models[name] === 'undefined') {
     // Create model generator function
@@ -61,10 +61,8 @@ function register(name, properties) {
     })
     // Parse the columns
     parsers.columns(Modely.models[name], properties.columns)
-    // Parse audit data
-    parsers.audit(Modely.models[name], properties.audit)
     // Define the Properties of the model.
-    Modely.emit('afterRegistration', Modely.models[name])
+    Modely.emit('AfterRegistration', Modely.models[name])
     this.log.debug('[Modely] Registered "' + name + '" model')
   } else {
     this.log.debug('[Modely] "' + name + '" is already registered')

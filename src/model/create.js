@@ -17,19 +17,10 @@ module.exports = function createModel(properties) {
         return reject(new Error('InvalidPropertySupplied'))
       }
     }
+    Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
     dataObject = Model.$mapModelProperties(Model)
     if (Model._columns[Model._primary_key].auto) {
       delete dataObject[Model._columns[Model._primary_key].name]
-    }
-    // Check if the Model is audited and apply audit information
-    if (Model._schema.audit) {
-      if (typeof Model.$user !== 'undefined' && Model.$user !== null) {
-        utils.setAuditCreated(Model, dataObject)
-        utils.setAuditModified(Model, dataObject)
-      } else {
-        Model._action = null
-        return reject(new Error('UserRequired'))
-      }
     }
     // Copy ._meta to ._data.values._meta
     Model._data.values._meta = Model._meta

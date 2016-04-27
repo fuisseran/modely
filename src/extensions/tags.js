@@ -2,6 +2,7 @@ var _ = require('underscore')
 var async = require('async')
 var Promise = require('bluebird')
 var Modely = null
+
 var models = {
   tag: {
     version: 1,

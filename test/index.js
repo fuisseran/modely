@@ -159,10 +159,10 @@ function testTags() {
 }
 
 Modely.initialise()
-  // .then(testCreate)
-  // .then(testSave)
+  .then(testCreate)
+   .then(testSave)
   // .then(testUpdate)
-  // .then(testTags)
+   .then(testTags)
   // .then(testDelete)
   .then(function () {
     var search = new Modely.models.account
