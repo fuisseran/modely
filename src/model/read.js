@@ -56,6 +56,7 @@ module.exports = function readModel(params) {
   // check what parameters have been passed
   return new Promise(function (resolve, reject) {
     if (!isNaN(params) && !(params % 1)) {
+      Model[Model._primary_key] = params
       loadSingle(Model, params).then(resolve).catch(reject)
     } else {
       // TODO: filtered load

@@ -63,7 +63,6 @@ for (key in ee) {
 module.exports = Modely
 // Import requires
 $BaseModel = require('./model')
-parseRelationships = require('./relationships')
 Object.defineProperties(Modely, {
   models: {
     get: function () {
@@ -90,15 +89,15 @@ Object.defineProperties(Modely, {
       return Log
     }
   },
-  relationship_pending:{
+  relationship_pending: {
     enumerable: true,
-    value : []
+    value: []
   },
   initialise: {
     value: function initialise() {
       var models = this.models
       return new Promise(function (resolve, reject) {
-        parseRelationships().then(function () {
+        parseRelationships.parseRelationships().then(function () {
           async.each(
             models,
             function iterator(model, callback) {
@@ -117,7 +116,7 @@ Object.defineProperties(Modely, {
     }
   }
 })
-
+parseRelationships = require('./relationships')(Modely)
 
 loadExtensions()
 /**

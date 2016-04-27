@@ -69,15 +69,22 @@ function testSave() {
     anotherAccount.$user = {
       id: 0
     }
-    anotherAccount.$save(testData).then(function () {
-      return anotherAccount.$save({ username: 'SaveTest2' })
-    })
-    .then(function () {
-      resolve(log('[TEST] OK'))
-    }).catch(function (err) {
-      log(err)
-      log('[TEST] FAILED')
-      resolve(err)
+    
+    anotherAccount.$read(7).then(function () {
+      anotherAccount.$save({ username: 'yayupdate' }).then(function () {
+        return anotherAccount.$save({ username: 'SaveTest2' }).then(function (result) {
+          console.log(result)
+        }).catch(function (err) {
+          console.log(err)
+        })
+      })
+      .then(function () {
+        resolve(log('[TEST] OK'))
+      }).catch(function (err) {
+        log(err)
+        log('[TEST] FAILED')
+        resolve(err)
+      })
     })
   })
 }

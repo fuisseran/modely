@@ -79,6 +79,7 @@ function oneToOne(modelName, args) {
     sourceColumn = sourceModel.prototype._columns[args.source.column]
     targetModel = Modely.models[args.target.model]
     targetColumn = targetModel.prototype._columns[args.target.column]
+    
     newColumn = getNewColumn(sourceColumn, targetColumn, args.source, args.target)
     if (newColumn) {
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
