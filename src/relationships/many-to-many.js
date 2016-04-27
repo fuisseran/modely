@@ -1,6 +1,7 @@
 // processes many-to-many relationships on the model
 var Modely
 var common = require('./common')
+var modelyCommon = require('../common')
 
 function addManyToManyRelationships(modelName, args) {
   var models = {
@@ -45,8 +46,8 @@ function addManyToManyRelationships(modelName, args) {
       target: args.target,
       join: function (knexObj) {
         if (typeof knekObj === 'undefined') {
-          return ' LEFT INNER JOIN ' + modelNames.join + ' ON ' + columns.joinSource + ' = '
-          + columns.source.full_name + ' LEFT INNER JOIN ' + modelNames.target + ' ON ' +
+          return ' LEFT JOIN ' + modelNames.join + ' ON ' + columns.joinSource + ' = '
+          + columns.source + ' LEFT JOIN ' + modelNames.target + ' ON ' +
           columns.joinTarget + ' = ' + columns.target + ' '
         }
         knexObj.innerJoin(modelNames.join, columns.joinSource, columns.source)
@@ -63,8 +64,8 @@ function addManyToManyRelationships(modelName, args) {
       target: args.target,
       join: function (knexObj) {
         if (typeof knekObj === 'undefined') {
-          return ' LEFT INNER JOIN ' + modelNames.target + ' ON ' + columns.joinTarget + ' = ' +
-          columns.target + ' LEFT INNER JOIN ' + modelNames.join + ' ON ' + columns.joinSource +
+          return ' LEFT JOIN ' + modelNames.join + ' ON ' + columns.joinTarget + ' = ' +
+          columns.target + ' LEFT JOIN ' + modelNames.source + ' ON ' + columns.joinSource +
           ' = ' + columns.source + ' '
         }
         knexObj.innerJoin(modelNames.target, columns.joinTarget, columns.target)
@@ -92,7 +93,8 @@ function manyToMany(modelName, args) {
   args.target.column = common.getColumnName(args.target.model, args.target.column)
   if (args.source.model !== null && args.source.column !== null && args.target.model !== null &&
   args.target.column !== null) {
-    mapModelName = [args.source.model, args.target.model].sort().join('_') + '_map'
+    mapModelName = modelyCommon.camelize([args.source.model, args.target.model]
+    .sort().join('') + 'map')
     Object.keys(args).forEach(function (property) {
       var name
       var original = args[property]

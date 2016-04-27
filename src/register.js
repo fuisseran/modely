@@ -9,8 +9,8 @@ function register(name, properties) {
   if (!name || !properties) {
     throw new Error('InvalidParamters')
   }
-  // Normalise the model name
-  name = name.toLowerCase().replace(/[^\w\s]/g, '_')
+  // Normalise the model name needs to be looked at again
+  // name = name
   // Emit event for before model registration
   Modely.emit('beforeRegistration', name, properties)
   // process the model properties

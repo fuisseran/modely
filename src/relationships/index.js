@@ -1,4 +1,4 @@
-// relationships
+// NOTE: This could be moved to extensions
 var Modely = require('../')
 var fs = require('fs')
 var Promise = require('bluebird')

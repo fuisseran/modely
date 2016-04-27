@@ -18,7 +18,9 @@ module.exports = function createModel(properties) {
       }
     }
     dataObject = Model.$mapModelProperties(Model)
-    delete dataObject[Model._columns[Model._primary_key].name]
+    if (Model._columns[Model._primary_key].auto) {
+      delete dataObject[Model._columns[Model._primary_key].name]
+    }
     // Check if the Model is audited and apply audit information
     if (Model._schema.audit) {
       if (typeof Model.$user !== 'undefined' && Model.$user !== null) {

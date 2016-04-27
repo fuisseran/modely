@@ -7,6 +7,7 @@ module.exports = function (Model, audit) {
       created_by: {
         name: tblName + '_created_by',
         full_name: tblName + '.' + tblName + '_created_by',
+        label: 'Created By',
         type: 'integer',
         not_null: true
       },
@@ -14,18 +15,21 @@ module.exports = function (Model, audit) {
         name: tblName + '_created_on',
         full_name: tblName + '.' + tblName + '_created_on',
         type: 'datetime',
+        label: 'Created On',
         not_null: true,
         default: now
       },
       modified_by: {
         name: tblName + '_modified_by',
         full_name: tblName + '.' + tblName + '_modified_by',
+        label: 'Modified By',
         type: 'integer',
         not_null: true
       },
       modified_on: {
         name: tblName + '_modified_on',
         full_name: tblName + '.' + tblName + '_modified_on',
+        label: 'Modified On',
         type: 'datetime',
         not_null: true,
         default: now

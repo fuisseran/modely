@@ -1,8 +1,11 @@
 var Promise = require('bluebird')
-
-var Modely = require('../index')({ client: 'pg',
+var knex = require('knex')({ client: 'pg',
   connection: 'postgres://test:test@localhost:5432/test'
 })
+var Modely = require('../index')(knex)
+//var Modely = require('../index')({ client: 'pg',
+//  connection: 'postgres://test:test@localhost:5432/test'
+//})
 var AccountModel
 var account
 var log = console.log
@@ -156,15 +159,22 @@ function testTags() {
 }
 
 Modely.initialise()
-  .then(testCreate)
-  .then(testSave)
-  .then(testUpdate)
-  .then(testTags)
-  .then(testDelete)
+  // .then(testCreate)
+  // .then(testSave)
+  // .then(testUpdate)
+  // .then(testTags)
+  // .then(testDelete)
   .then(function () {
-    var person = new Modely.models.person
-    person.$search({ query: { id: 1, anotherthing: 'fasdfasdfa', 'account.id': 1 } })
-    log(JSON.stringify(account, null, 2))
-    log('Done')
+    var search = new Modely.models.account
+    return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], limit: 2, offset:0 })
+    .then(function (result) {
+      console.log(result)
+      log(JSON.stringify(account, null, 2))
+      log('Done')
+    }).catch(function(error){
+      console.log('Oops!')
+      console.log(error.data.sql.sql)
+      console.log(error.data.error)
+    }) 
   })
   // .then(function(){return test_delete(account.id)})

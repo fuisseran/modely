@@ -164,6 +164,24 @@ function beforeLoad(Model) {
   }
 }
 
+function beforeSearch(params) {
+  if (params.taggable) {
+    params.query.select(Modely.knex.raw('(SELECT \'[\' || array_to_string( array_agg(' +
+    '(\'{"id":\' || tag_id ||\',"label":"\'||tag_label||\'","name":"\'||tag_name||\'"}' +
+    '\')), \',\')||\']\' FROM tag LEFT JOIN tag_mapping ON tag.tag_id = tag_mapping_tag_id ' +
+    'WHERE tag_mapping_model_id = ' + params.idColumnName + ' AND tag_mapping_model_name=\'' +
+     params.modelName + '\') as tags'))
+  }
+}
+
+function searchParse(formattedRow, rowData) {
+  if (typeof rowData.tags !== 'undefined') {
+    formattedRow._meta.tags = rowData.tags
+    delete rowData.tags
+  }
+}
+
+
 /**
  * Processed the _row_cache converting the tag string to an object
  */
@@ -256,6 +274,19 @@ function onSave(Model) {
   }
 }
 
+function onRegister(Model) {
+  var value = false
+  if (typeof Model.prototype._schema.taggable !== 'undefined' && 
+  Model.prototype._schema.taggable === true) {
+    value = true
+  }
+  Object.defineProperty(Model.prototype, '_taggable', {
+    enumerable: false,
+    value: value,
+    configurable: false
+  })
+}
+
 module.exports = function tagging(modelyReference) {
   // Reference to Model
   Modely = modelyReference
@@ -267,6 +298,9 @@ module.exports = function tagging(modelyReference) {
   Modely.on('Model:*:BeforeSave', beforeSave)
   Modely.on('Model:*:OnSave', onSave)
   Modely.on('Model:*:OnDelete', onDelete)
+  Modely.on('Modely:BeforeSearch', beforeSearch)
+  Modely.on('Modely:SearchRowParse', searchParse)
+  Modely.on('afterRegistration', onRegister)
   Modely.on('Model:tag:BeforeSave', function (Model) {
     return Model
   })

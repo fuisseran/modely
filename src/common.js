@@ -38,7 +38,15 @@ function inherits(child, parent) {
   child.prototype.super_ = parent
 }
 
+function camelize(str) {
+  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function (match, index) {
+    if (+match === 0) return '' // or if (/\s+/.test(match)) for white spaces
+    return index === 0 ? match.toLowerCase() : match.toUpperCase()
+  })
+}
+
 module.exports = {
   apply_core_properties: applyCoreProperties,
-  inherits: inherits
+  inherits: inherits,
+  camelize: camelize
 }

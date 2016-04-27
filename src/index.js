@@ -26,13 +26,17 @@ var key
 * @returns {knex} knex
 */
 function getDatabaseConnection(connectionString, instance) {
-  knex = knexLib(connectionString)
+  if (typeof connectionString.__knex__ === 'undefined') {
+    knex = knexLib(connectionString)
+  } else {
+    knex = connectionString
+  }
   instance.knex_initialised = true
 }
 
 function Modely(connectionString, logger) {
   if (connectionString) {
-    getDatabaseConnection(connectionString, Modely)
+    getDatabaseConnection(connectionString, Modely)  
   }
   if (logger) {
     this.log = logger
@@ -85,6 +89,10 @@ Object.defineProperties(Modely, {
     get: function () {
       return Log
     }
+  },
+  relationship_pending:{
+    enumerable: true,
+    value : []
   },
   initialise: {
     value: function initialise() {
