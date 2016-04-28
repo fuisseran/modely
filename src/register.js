@@ -48,7 +48,8 @@ function register(name, properties) {
       ['_indexes', properties.indexes || []],      /* Array of indexes defaults for the model */
       ['_relationships', properties.relationships || []],      /* Relationships of the object */
       ['_data_object', null],   /* Object to use in db transaction for inserting and updating */
-      ['_row_cache', null]                                      /* Used to store raw row data */
+      ['_row_cache', null],                                     /* Used to store raw row data */
+      ['_stash', {}]
     ]
     // Assign the prototype properties
     prototypeProperties.forEach(function (item) {

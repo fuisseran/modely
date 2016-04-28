@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var slugify = require('underscore.string/slugify')
 var async = require('async')
 var Promise = require('bluebird')
 var Modely = null
@@ -76,7 +77,7 @@ function parseTagsToAdd(tags) {
       tags,
       function iterator(tag, callback) {
         if (typeof tag.id === 'undefined' || tag.id <= 0) {
-          tag.name = _.slugify(tag.label)
+          tag.name = slugify(tag.label)
           Modely.knex.raw('SELECT * FROM tag WHERE tag_name = ?', [tag.name])
             .then(function (queryResults) {
               if (queryResults.rows.length > 0) {
@@ -248,7 +249,7 @@ function onSave(Model) {
       Model._pending_transactions.push(
         Model._trx.insert({
           tag_label: tag.label,
-          tag_name: _.slugify(tag.label)
+          tag_name: slugify(tag.label)
         }, 'tag_id').into('tag').then(function (insertResult) {
           Model._trx.insert({
             tag_mapping_model_name: modelName,

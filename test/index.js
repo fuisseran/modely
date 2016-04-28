@@ -69,9 +69,8 @@ function testSave() {
     anotherAccount.$user = {
       id: 0
     }
-    
-    anotherAccount.$read(7).then(function () {
-      anotherAccount.$save({ username: 'yayupdate' }).then(function () {
+    anotherAccount.$read(255).then(function () {
+      return anotherAccount.$save({ username: 'yayupdate' }).then(function () {
         return anotherAccount.$save({ username: 'SaveTest2' }).then(function (result) {
           console.log(result)
         }).catch(function (err) {
@@ -153,7 +152,7 @@ function addTestData () {
 function testTags() {
   return new Promise(function (resolve) {
     log('[Test] Tags')
-    account._meta.tags = [{ label: 'test' }]
+    account._meta.tags = [{ label: 'test2' }, { label: 'test5' }]
     account.$update().then(function () {
       log('[TEST] OK')
       resolve()
@@ -173,12 +172,13 @@ Modely.initialise()
   // .then(testDelete)
   .then(function () {
     var search = new Modely.models.account
-    return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], limit: 2, offset:0 })
+    return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], 
+    limit: 50, offset: 50 })
     .then(function (result) {
       console.log(result)
       log(JSON.stringify(account, null, 2))
       log('Done')
-    }).catch(function(error){
+    }).catch(function (error) {
       console.log('Oops!')
       console.log(error.data.sql.sql)
       console.log(error.data.error)

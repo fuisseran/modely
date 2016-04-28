@@ -227,7 +227,7 @@ module.exports = function modelSearch(params) {
       statement.offset(params.offset)
     }
     Modely.emit('Modely:BeforeSearch', {
-      taggable: model._taggable,
+      taggable: model._schema.taggable,
       query: statement,
       idColumnName: model._columns[model._primary_key].full_name,
       modelName: model._name
