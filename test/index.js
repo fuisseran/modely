@@ -69,7 +69,7 @@ function testSave() {
     anotherAccount.$user = {
       id: 0
     }
-    anotherAccount.$read(255).then(function () {
+    anotherAccount.$read(209).then(function () {
       return anotherAccount.$save({ username: 'yayupdate' }).then(function () {
         return anotherAccount.$save({ username: 'SaveTest2' }).then(function (result) {
           console.log(result)
@@ -164,8 +164,8 @@ function testTags() {
   })
 }
 
-Modely.initialise()
-  .then(testCreate)
+
+testCreate()
    .then(testSave)
   // .then(testUpdate)
    .then(testTags)
@@ -175,8 +175,6 @@ Modely.initialise()
     return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], 
     limit: 50, offset: 50 })
     .then(function (result) {
-      console.log(result)
-      log(JSON.stringify(account, null, 2))
       log('Done')
     }).catch(function (error) {
       console.log('Oops!')

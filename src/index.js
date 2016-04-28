@@ -17,7 +17,6 @@ var modelCollection = {}
 // var logMethods = ['info', 'error', 'warn', 'debug']
 var $BaseModel
 var Register = require('./register')
-var parseRelationships
 var knex
 var key
 /**
@@ -77,47 +76,22 @@ Object.defineProperties(Modely, {
       return knex
     }
   },
-  register: {
-    value: Register
-  },
   relationships: {
     value: {}
+  },
+  register: {
+    value: Register
   },
   log: {
     enumerable: true,
     get: function () {
       return Log
     }
-  },
-  relationship_pending: {
-    enumerable: true,
-    value: []
-  },
-  initialise: {
-    value: function initialise() {
-      var models = this.models
-      return new Promise(function (resolve, reject) {
-        parseRelationships.parseRelationships().then(function () {
-          async.each(
-            models,
-            function iterator(model, callback) {
-              var instance = model()
-              instance.$install().then(function () {
-                callback(null)
-              })
-            },
-            function done(err, results) {
-              return resolve(results)
-            }
-          )
-          return null
-        }).catch(reject)
-      })
-    }
   }
 })
-parseRelationships = require('./relationships')(Modely)
-
+Object.defineProperty(Modely, 'relationshipsManager', {
+  value: require('./relationships')(Modely)
+})
 loadExtensions()
 /**
 * Checks if the supplied logger has the required log methods

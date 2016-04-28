@@ -53,6 +53,10 @@ function oneToMany(modelName, args) {
   var targetModel
   var targetColumn
   var newColumn
+  var parsedArgs = {
+    source: {},
+    target: {}
+  }
   if (typeof args === 'undefined' || args === null) {
     Modely.log.warn('Failed to create relationship for "%s", no relationship data provided',
     modelName)
@@ -65,19 +69,21 @@ function oneToMany(modelName, args) {
     return false
   }
   common.parseArgs(args)
-  args.source.model = common.getSourceModelName(modelName, args)
-  args.target.model = common.getTargetModelName(modelName, args)
-  args.source.column = common.getSourceColumnName(modelName, args)
-  args.target.column = common.getTargetColumnName(modelName, args)
-  if (args.target.model !== null && args.source.model !== null && args.target.column !== null &&
-  args.source.column !== null) {
+  parsedArgs.source.column = args.source.column
+  parsedArgs.target.column = args.target.column
+  parsedArgs.source.model = common.getSourceModelName(modelName, args)
+  parsedArgs.target.model = common.getTargetModelName(modelName, args)
+  parsedArgs.source.column = common.getSourceColumnName(modelName, parsedArgs)
+  parsedArgs.target.column = common.getTargetColumnName(modelName, parsedArgs)
+  if (parsedArgs.target.model !== null && parsedArgs.source.model !== null &&
+  parsedArgs.target.column !== null && parsedArgs.source.column !== null) {
     // lets check if the source model and column exist
-    sourceModel = Modely.models[args.source.model]
-    sourceColumn = sourceModel.prototype._columns[args.source.column]
-    targetModel = Modely.models[args.target.model]
-    targetColumn = targetModel.prototype._columns[args.target.column]
+    sourceModel = Modely.models[parsedArgs.source.model]
+    sourceColumn = sourceModel.prototype._columns[parsedArgs.source.column]
+    targetModel = Modely.models[parsedArgs.target.model]
+    targetColumn = targetModel.prototype._columns[parsedArgs.target.column]
     // New Column
-    newColumn = getNewColumn(sourceColumn, targetColumn, args.source, args.target)
+    newColumn = getNewColumn(sourceColumn, targetColumn, parsedArgs.source, parsedArgs.target)
     if (newColumn) {
       newColumnName = Object.keys(newColumn.column)[0]
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
@@ -90,35 +96,37 @@ function oneToMany(modelName, args) {
     if (typeof Modely.relationships[modelName] === 'undefined') {
       Modely.relationships[modelName] = {}
     }
-    if (typeof Modely.relationships[args.source.model][args.target.model] === 'undefined') {
-      Modely.relationships[args.source.model][args.target.model] = {
+    if (typeof Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] ===
+    'undefined') {
+      Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] = {
         type: 'one-to-many',
-        source: args.source,
-        target: args.target,
+        source: parsedArgs.source,
+        target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' INNER JOIN ' + args.source.model + ' ON ' + targetColumn.full_name
+            return ' INNER JOIN ' + parsedArgs.source.model + ' ON ' + targetColumn.full_name
             + ' = ' + sourceColumn.full_name + ' '
           }
-          knexObj.innerJoin(args.source.model, args.source.column.full_name,
-          args.target.column.full_name)
+          knexObj.innerJoin(parsedArgs.source.model, parsedArgs.source.column.full_name,
+          parsedArgs.target.column.full_name)
         }
       }
-      if (typeof Modely.relationships[args.target.model] === 'undefined') {
-        Modely.relationships[args.target.model] = {}
+      if (typeof Modely.relationships[parsedArgs.target.model] === 'undefined') {
+        Modely.relationships[parsedArgs.target.model] = {}
       }
-      if (typeof Modely.relationships[args.target.model][args.source.model] === 'undefined') {
-        Modely.relationships[args.target.model][args.source.model] = {
+      if (typeof Modely.relationships[parsedArgs.target.model][parsedArgs.source.model] ===
+      'undefined') {
+        Modely.relationships[parsedArgs.target.model][parsedArgs.source.model] = {
           type: 'many-to-one',
-          source: args.source,
-          target: args.target,
+          source: parsedArgs.source,
+          target: parsedArgs.target,
           join: function (knexObj) {
             if (typeof knekObj === 'undefined') {
-              return ' INNER JOIN ' + args.source.model + ' ON ' + targetColumn.full_name
+              return ' INNER JOIN ' + parsedArgs.source.model + ' ON ' + targetColumn.full_name
               + ' = ' + sourceColumn.full_name + ' '
             }
-            knexObj.innerJoin(args.target.model, args.source.column.full_name,
-            args.target.column.full_name)
+            knexObj.innerJoin(parsedArgs.target.model, parsedArgs.source.column.full_name,
+            parsedArgs.target.column.full_name)
           }
         }
       }

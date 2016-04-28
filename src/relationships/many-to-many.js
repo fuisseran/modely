@@ -79,6 +79,10 @@ function addManyToManyRelationships(modelName, args) {
 
 function manyToMany(modelName, args) {
   var mapModelName
+  var parsedArgs = {
+    source: {},
+    target: {}
+  }
   var modelProperties = {
     version: 1,
     columns: {
@@ -87,17 +91,17 @@ function manyToMany(modelName, args) {
     indexes: []
   }
   common.parseArgs(args)
-  args.source.model = common.getSourceModelName(modelName, args)
-  args.target.model = common.getTargetModelName(modelName, args)
-  args.source.column = common.getColumnName(args.source.model, args.source.column)
-  args.target.column = common.getColumnName(args.target.model, args.target.column)
-  if (args.source.model !== null && args.source.column !== null && args.target.model !== null &&
-  args.target.column !== null) {
-    mapModelName = modelyCommon.camelize([args.source.model, args.target.model]
+  parsedArgs.source.model = common.getSourceModelName(modelName, args)
+  parsedArgs.target.model = common.getTargetModelName(modelName, args)
+  parsedArgs.source.column = common.getColumnName(parsedArgs.source.model, args.source.column)
+  parsedArgs.target.column = common.getColumnName(parsedArgs.target.model, args.target.column)
+  if (parsedArgs.source.model !== null && parsedArgs.source.column !== null &&
+  parsedArgs.target.model !== null && parsedArgs.target.column !== null) {
+    mapModelName = modelyCommon.camelize([parsedArgs.source.model, parsedArgs.target.model]
     .sort().join('') + 'map')
-    Object.keys(args).forEach(function (property) {
+    Object.keys(parsedArgs).forEach(function (property) {
       var name
-      var original = args[property]
+      var original = parsedArgs[property]
       if (typeof original.model !== 'undefined' && typeof original.column !== 'undefined') {
         name = original.model + '_' + original.column
         modelProperties.columns[name] = common.copyColumn(original, { model: mapModelName,
@@ -106,10 +110,10 @@ function manyToMany(modelName, args) {
       }
     })
     Modely.register(mapModelName, modelProperties)
-    addManyToManyRelationships(mapModelName, args)
+    addManyToManyRelationships(mapModelName, parsedArgs)
+    Modely.log.debug('[Modely] Added "%s" relationship between "%s" and "%s"', args.type, parsedArgs.source.model, parsedArgs.target.model)
   } else {
-    Modely.log.error('[Modely] Unable to create mapping table for "%s" model', modelName)
-    Modely.log.error(args)
+    common.addToQueue(modelName, args)
   }
 }
 

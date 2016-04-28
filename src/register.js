@@ -65,6 +65,7 @@ function register(name, properties) {
     // Define the Properties of the model.
     Modely.emit('AfterRegistration', Modely.models[name])
     this.log.debug('[Modely] Registered "' + name + '" model')
+    this.relationshipsManager.parse(name)
   } else {
     this.log.debug('[Modely] "' + name + '" is already registered')
   }

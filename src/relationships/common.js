@@ -55,8 +55,6 @@ function getColumnName(modelName, columnlName) {
     }
     return columnlName
   }
-  Modely.log.error('[Modely] Unable to find the model "%s" when looking for "%s" column',
-  modelName, columnlName)
   return null
 }
 
@@ -76,8 +74,6 @@ function getSourceModelName(modelName, args) {
       return args.source.model
     }
   }
-  Modely.log.error('[Modely] Unable to parse the relationship : Could not find the model "%s"',
-  modelName)
   return null
 }
 
@@ -97,8 +93,6 @@ function getTargetModelName(modelName, args) {
       return args.target.model
     }
   }
-  Modely.log.error('[Modely] Unable to parse the relationship : Could not find the model "%s"',
-  args.target.model)
   return null
 }
 
@@ -122,8 +116,6 @@ function getSourceColumnName(model, args) {
   if (typeof Model.prototype._columns[args.source.column] !== 'undefined') {
     return args.source.column
   }
-  Modely.log.error('[Modely] Unable to parse the relationship : Could not find the column "%s"' +
-  ' on model "%s"', args.source.column, args.source.model)
   return null
 }
 
@@ -182,12 +174,26 @@ function copyColumn(source, target, skipProperties) {
       })
       return newColumn
     }
-    Modely.log('[Modely] Failed to copy column "%s" from model "%s"', source.column, source.model)
+    Modely.log.debug('[Modely] Failed to copy column "%s" from model "%s"', source.column, source.model)
     return null
   }
-  Modely.log('[Modely] Failed to copy column, unable to find model "%s"', source.column,
+  Modely.log.debug('[Modely] Failed to copy column, unable to find model "%s"', source.column,
   source.model)
   return null
+}
+
+function addToQueue(modelName, args) {
+  var relatedModelName = null
+  if (typeof args.source.model !== 'undefined' && args.source.model !== modelName) {
+    relatedModelName = args.source.model
+  } else if (typeof args.target.model !== 'undefined' && args.target.model !== modelName) {
+    relatedModelName = args.target.model
+  }
+  if (typeof Modely.relationshipsManager.pending[relatedModelName] === 'undefined') {
+    Modely.relationshipsManager.pending[relatedModelName] = []
+  }
+  Modely.relationshipsManager.pending[relatedModelName].push({ model: modelName, args: args })
+  Modely.log.debug('[Modely] Queuing "%s" relationship on "%s" model', args.type, modelName)
 }
 
 module.exports = {
@@ -197,5 +203,6 @@ module.exports = {
   getSourceColumnName: getSourceColumnName,
   getTargetColumnName: getTargetColumnName,
   getColumnName: getColumnName,
-  copyColumn: copyColumn
+  copyColumn: copyColumn,
+  addToQueue: addToQueue
 }

@@ -54,6 +54,10 @@ function oneToOne(modelName, args) {
   var targetColumn
   var newColumn
   var origin
+  var parsedArgs = {
+    source: {},
+    target: {}
+  }
   // Check that arguments were passed
   if (typeof args === 'undefined' || args === null) {
     Modely.log.warn('[Modely] Failed to create relationship for "%s", no relationship data ' +
@@ -67,38 +71,38 @@ function oneToOne(modelName, args) {
     return false
   }
   common.parseArgs(args)
-  args.source.model = common.getSourceModelName(modelName, args)
-  args.target.model = common.getTargetModelName(modelName, args)
-  args.source.column = common.getSourceColumnName(modelName, args)
-  args.target.column = common.getTargetColumnName(modelName, args)
+  parsedArgs.source.model = common.getSourceModelName(modelName, args)
+  parsedArgs.target.model = common.getTargetModelName(modelName, args)
+  parsedArgs.source.column = common.getSourceColumnName(modelName, parsedArgs)
+  parsedArgs.target.column = common.getTargetColumnName(modelName, parsedArgs)
   // If there is a target and source apply them to the model
-  if (args.target.model !== null && args.source.model !== null &&
-  args.target.column !== null && args.source.column !== null) {
+  if (parsedArgs.target.model !== null && parsedArgs.source.model !== null &&
+  parsedArgs.target.column !== null && parsedArgs.source.column !== null) {
     // lets check if the source model and column exist
-    sourceModel = Modely.models[args.source.model]
-    sourceColumn = sourceModel.prototype._columns[args.source.column]
-    targetModel = Modely.models[args.target.model]
-    targetColumn = targetModel.prototype._columns[args.target.column]
-    
-    newColumn = getNewColumn(sourceColumn, targetColumn, args.source, args.target)
+    sourceModel = Modely.models[parsedArgs.source.model]
+    sourceColumn = sourceModel.prototype._columns[parsedArgs.source.column]
+    targetModel = Modely.models[parsedArgs.target.model]
+    targetColumn = targetModel.prototype._columns[parsedArgs.target.column]
+    newColumn = getNewColumn(sourceColumn, targetColumn, parsedArgs.source, parsedArgs.target)
     if (newColumn) {
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
     }
-    if (typeof Modely.relationships[args.source.model] === 'undefined') {
-      Modely.relationships[args.source.model] = {}
+    if (typeof Modely.relationships[parsedArgs.source.model] === 'undefined') {
+      Modely.relationships[parsedArgs.source.model] = {}
     }
-    if (typeof Modely.relationships[args.target.model] === 'undefined') {
-      Modely.relationships[args.target.model] = {}
+    if (typeof Modely.relationships[parsedArgs.target.model] === 'undefined') {
+      Modely.relationships[parsedArgs.target.model] = {}
     }
-    if (typeof Modely.relationships[args.source.model][args.target.model] === 'undefined') {
+    if (typeof Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] === 
+    'undefined') {
       Modely.relationships[modelName][origin] = {
         type: 'one-to-one',
-        source: args.source,
-        target: args.target,
+        source: parsedArgs.source,
+        target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' LEFT OUTER JOIN ' + args.source.model + ' ON ' + args.source.column.fullname +
-            ' = ' + args.target.column.fullname + ' '
+            return ' LEFT OUTER JOIN ' + parsedArgs.source.model + ' ON ' + parsedArgs.source
+            .column.fullname + ' = ' + args.target.column.fullname + ' '
           }
           knexObj.leftOuterJoin(args.source.model, args.source.column.fullname,
           args.target.column.fullname)
@@ -129,8 +133,7 @@ function oneToOne(modelName, args) {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }
   } else {
-    Modely.log.error('[Modely] Unable to parse the relationship for model "%s"', modelName)
-    Modely.log.error(args)
+    common.addToQueue(modelName, args)
   }
 }
 
