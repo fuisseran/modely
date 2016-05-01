@@ -70,11 +70,10 @@ function register(name, properties) {
       Modely.log.debug('[Modely] Registered "' + name + '" model')
       modelInstance = new Modely.models[name]()
       if (Modely.connection_initialised) {
-        modelInstance.$install().then(resolve)
-      } else {
-        Modely.queue.push({ model: name, fn: '$install', args: [] })
-        resolve()
+        return modelInstance.$install().then(resolve)
       }
+      Modely.queue.push({ model: name, fn: '$install', args: [] })
+      resolve()
     } else {
       this.log.debug('[Modely] "' + name + '" is already registered')
     }

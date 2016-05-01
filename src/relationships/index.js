@@ -47,7 +47,7 @@ function processPendingRelationships(args) {
     async.each(args.pending, function pendingIterator(relationship, callback) {
       var modified = parseRelationship(Modely.models[relationship.model], relationship.args)
       if (Array.isArray(modified) && modified.length > 0) {
-        args.modified.concat(modified)
+        args.modified = args.modified.concat(modified)
       }
       callback(null)
     }, function done(err) {
@@ -58,6 +58,30 @@ function processPendingRelationships(args) {
     })
   })
 }
+
+function updateModels(modelName, callback) {
+  var modelToUpdate = new Modely.models[modelName]()
+  return modelToUpdate.$install().then(function () {
+    callback(null)
+  }).catch(function () {
+    callback(null)
+    Modely.log.debug('[Modely] Failed to update "%s" model following a relationship ' +
+    'alteration', modelName)
+  })
+}
+
+function processModified(parseArgs) {
+  return new Promise(function (resolve, reject) {
+    async.each(parseArgs.modified, updateModels, function done(err, data) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
 function parseModelRelationships(modelName) {
   var parseArgs = {
     model: Modely.models[modelName],
@@ -67,26 +91,10 @@ function parseModelRelationships(modelName) {
   return new Promise(function (resolve, reject) {
     return processModelRelationships(parseArgs)
     .then(processPendingRelationships)
-    .then(function () {
-      async.each(parseArgs.modified, function iterator(modelNameToUpdate, callback) {
-        var modelToUpdate = new Modely.models[modelNameToUpdate]()
-        modelToUpdate.$install(function () {
-          callback(null)
-        }).catch(function () {
-          callback(null)
-          Modely.log.debug('[Modely] Failed to update "%s" model following a relationship ' +
-          'alteration', modelNameToUpdate)
-        })
-      }, function done(err, data) {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(data)
-        }
-      })
-    }).catch(function (err) {
-      console.log(err)
-      resolve()
+    .then(processModified)
+    .then(resolve)
+    .catch(function (err) {
+      reject(err)
     })
     // need to check if any models have been changed and call install on those models again
   })

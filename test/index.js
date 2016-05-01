@@ -69,10 +69,9 @@ function testSave() {
     anotherAccount.$user = {
       id: 0
     }
-    anotherAccount.$read(2).then(function () {
+    anotherAccount.$read(1).then(function () {
       return anotherAccount.$save({ username: 'yayupdate' }).then(function () {
-        return anotherAccount.$save({ username: 'SaveTest2' }).then(function (result) {
-          console.log(result)
+        return anotherAccount.$save({ username: 'SaveTest2' }).then(function () {
         }).catch(function (err) {
           console.log(err)
         })

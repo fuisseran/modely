@@ -24,7 +24,7 @@ function defineProperties(Model, columns) {
       enumerable: true,       // Required for enumeraiton of the property
       configurable: true,
       get: function () {
-        return Model._data.values[columnDef.name]
+        return Model._data.values[columnDef.name] || Model._data.original[columnDef.name] 
       },
       set: function (val) {
         if (val !== Model._data.values[columnDef.name]) {
@@ -65,18 +65,6 @@ function pendingTransactions(Model, action) {
   return new Promise(function (resolve) { resolve() })
 }
 
-function setAuditModified(Model, insertObject) {
-  var prefix = Model._name + '_'
-  insertObject[prefix + 'modified_by'] = Model.$user.id
-  insertObject[prefix + 'modified_on'] = (new Date()).toISOString().slice(0, 19).replace('T', ' ')
-}
-
-function setAuditCreated(Model, insertObject) {
-  var prefix = Model._name + '_'
-  insertObject[prefix + 'created_by'] = Model.$user.id
-  insertObject[prefix + 'created_on'] = (new Date()).toISOString().slice(0, 19).replace('T', ' ')
-}
-
 function mapModelProperties(Model) {
   var columns = Model._columns
   var values = Model._data.values
@@ -96,7 +84,5 @@ module.exports = {
   checkProperties: checkProperties,
   processPending: processPending,
   pendingTransactions: pendingTransactions,
-  mapModelProperties: mapModelProperties,
-  setAuditModified: setAuditModified,
-  setAuditCreated: setAuditCreated
+  mapModelProperties: mapModelProperties
 }

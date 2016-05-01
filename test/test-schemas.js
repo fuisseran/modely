@@ -18,7 +18,7 @@ module.exports = {
     },
     relationships: [
       {
-        type: 'many-to-many',
+        type: 'one-to-many',
         target: 'person'
       }
     ]

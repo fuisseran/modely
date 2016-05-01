@@ -53,6 +53,7 @@ function oneToMany(modelName, args) {
   var targetModel
   var targetColumn
   var newColumn
+  var modified = []
   var parsedArgs = {
     source: {},
     target: {}
@@ -85,6 +86,7 @@ function oneToMany(modelName, args) {
     // New Column
     newColumn = getNewColumn(sourceColumn, targetColumn, parsedArgs.source, parsedArgs.target)
     if (newColumn) {
+      modified.push(newColumn.model)
       newColumnName = Object.keys(newColumn.column)[0]
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
       if (typeof targetColumn === 'undefined') {
@@ -104,7 +106,7 @@ function oneToMany(modelName, args) {
         target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' INNER JOIN ' + parsedArgs.source.model + ' ON ' + targetColumn.full_name
+            return ' INNER JOIN ' + parsedArgs.target.model + ' ON ' + targetColumn.full_name
             + ' = ' + sourceColumn.full_name + ' '
           }
           knexObj.innerJoin(parsedArgs.source.model, parsedArgs.source.column.full_name,
@@ -130,13 +132,14 @@ function oneToMany(modelName, args) {
           }
         }
       }
+      Modely.log.debug('[Modely] Added "%s" relationship between "%s" and "%s"', args.type, parsedArgs.source.model, parsedArgs.target.model)
     } else {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }
   } else {
-    Modely.log.error('[Modely] Unable to parse the relationship for model "%s"', modelName)
-    Modely.log.error(args)
+    common.addToQueue(modelName, args)
   }
+  return modified
 }
 
 module.exports = function (modelyReference) {

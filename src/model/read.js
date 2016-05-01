@@ -6,11 +6,6 @@ function getAllColumnsArray(Model) {
   var columns = Object.keys(Model._columns).map(function (columnName) {
     return Model._columns[columnName].full_name
   })
-  if (Model._audit) {
-    Object.keys(Model._audit).forEach(function (columnName) {
-      columns.push(Model._audit[columnName].full_name)
-    })
-  }
   return columns
 }
 function loadSingle(Model) {

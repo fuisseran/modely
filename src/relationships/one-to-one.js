@@ -54,6 +54,7 @@ function oneToOne(modelName, args) {
   var targetColumn
   var newColumn
   var origin
+  var modified = []
   var parsedArgs = {
     source: {},
     target: {}
@@ -85,6 +86,7 @@ function oneToOne(modelName, args) {
     targetColumn = targetModel.prototype._columns[parsedArgs.target.column]
     newColumn = getNewColumn(sourceColumn, targetColumn, parsedArgs.source, parsedArgs.target)
     if (newColumn) {
+      modified.push(newColumn.model)
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
     }
     if (typeof Modely.relationships[parsedArgs.source.model] === 'undefined') {
@@ -135,6 +137,7 @@ function oneToOne(modelName, args) {
   } else {
     common.addToQueue(modelName, args)
   }
+  return modified
 }
 
 module.exports = function (modelyReference) {

@@ -178,8 +178,7 @@ function checkTable(Model) {
           schema.columns[propertyName] = {
             size: row.character_maxiumum_length
           }
-          if (typeof Model._columns[propertyName] === 'undefined' &&
-          typeof Model._audit[propertyName] === 'undefined') {
+          if (typeof Model._columns[propertyName] === 'undefined') {
             columnsToRemove.push(row.column_name)
           } else {
             compareColumn(row, Model._columns[propertyName])
@@ -191,17 +190,20 @@ function checkTable(Model) {
             newSchema.columns[propertyName] = Model._columns[propertyName]
           }
         })
-        Modely.knex.schema.table(Model._name, function (table) {
+        return Modely.knex.schema.table(Model._name, function (table) {
           Object.keys(newSchema.columns).forEach(function (propertyName) {
             processProperty(table, Model, propertyName)
             Modely.log.info('[Modely] Added columm "%s" to "%s"', propertyName, Model._name)
             resolve()
           })
-          columnsToRemove.forEach(function (column) {
-            // TODO: Back up the data before deleting it
-            table.dropColumn(column)
-            Modely.log.info('[Modely] Dropped column "%s" from "%s"', column, Model._name)
-          })
+          /* TODO: dropping the columns needs to be doen after modely is finished with, 
+           * should probably be called rather than automated, since it needs to be after all models
+           * have been registered.
+           * columnsToRemove.forEach(function (column) {
+           *   table.dropColumn(column)
+           *   Modely.log.info('[Modely] Dropped column "%s" from "%s"', column, Model._name)
+           * })
+           */
         }).catch(function (err) {
           Modely.log.error(err)
         })
@@ -209,12 +211,12 @@ function checkTable(Model) {
             return checkIndexes(Model)
           })
           .then(function () {
-            resolve()
+            return resolve()
           })
       }).catch(function (err) {
         Model.log.error('[MODELY] Unable to get table schema to check against')
         Model.log.error(err)
-        reject(err)
+        return reject(err)
       })
   })
 }

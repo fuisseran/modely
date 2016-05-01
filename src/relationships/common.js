@@ -127,7 +127,7 @@ function getSourceColumnName(model, args) {
  */
 function getTargetColumnName(model, args) {
   var Model = Modely.models[args.target.model]
-  if (typeof args.target.column === 'undefined' || args.target.column === null) {
+  if (typeof Model !== 'undefined' && typeof args.target.column === 'undefined' || args.target.column === null) {
     // if there is no target.column defined then assume the target column is the primary
     // key of the target model
     if (args.target.model === model) {
@@ -139,8 +139,6 @@ function getTargetColumnName(model, args) {
   'undefined') {
     return args.target.column
   }
-  Modely.log.error('[Modely] Unable to parse the relationship : Could not find the column "%s"' +
-  ' on model "%s"', args.target.column, args.target.model)
   return null
 }
 
