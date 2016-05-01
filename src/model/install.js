@@ -248,7 +248,7 @@ module.exports = function () {
         })
       } else {
         return checkTable(Model).then(function () {
-          Modely.relationshipsManager.parse(Model._name).then(resolve)
+          return Modely.relationshipsManager.parse(Model._name).then(resolve)
         }).catch(function (error) {
           return reject(error)
         })

@@ -11,7 +11,7 @@ function parseRelationship(Model, args) {
   if (typeof types[args.type] === 'undefined') {
     Modely.log.warn('Unknown relationship type specified' + Model._name)
   } else {
-    types[args.type](Model.prototype._name, args)
+    return types[args.type](Model.prototype._name, args)
   }
   if (typeof Modely.relationships[Model.prototype._name] === 'undefined') {
     Modely.relationships[Model.prototype._name] = {}
@@ -22,50 +22,71 @@ function relationships(args) {
   // TODO: needs to handle everything
 }
 
-function parseRelationships() {
-  return new Promise(function (resolve) {
-    async.eachSeries(Modely.models, function (Model, callback) {
-      if (Model.prototype._relationships.length > 0) {
-        async.eachSeries(Model.prototype._relationships,
-        function (relationshipArgs, relationshipCallback) {
-          parseRelationship(Model, relationshipArgs)
-          relationshipCallback(null)
-        }, callback.apply(callback, null))
-      } else {
-        callback(null)
+function processModelRelationships(args) {
+  var model = args.model
+  var modelRelationships = model.prototype._relationships
+  return new Promise(function (resolve, reject) {
+    async.each(modelRelationships, function relationshipIterator(relationship,
+    callback) {
+      var modified = parseRelationship(model, relationship)
+      if (Array.isArray(modified) && modified.length > 0) {
+        args.modified.concat(modified)
       }
-    }, function done() {
-      return resolve()
+      callback(null)
+    }, function done(err) {
+      if (err) {
+        return reject(err)
+      }
+      return resolve(args)
     })
   })
 }
 
-function parseModelRelationships(modelName) {
-  var model = Modely.models[modelName]
-  var pending = Modely.relationshipsManager.pending[modelName]
-  var modified = []
+function processPendingRelationships(args) {
   return new Promise(function (resolve, reject) {
-    model.prototype._relationships.forEach(function (relationship) {
-      parseRelationship(model, relationship)
-    })
-    if (typeof pending !== 'undefined') {
-      pending.forEach(function (relationship) {
-        parseRelationship(Modely.models[relationship.model], relationship.args)
-      })
-    }
-    async.each(modified, function iterator(modelNameToUpdate, callback) {
-      var modelToUpdate = new Modely.models[modelNameToUpdate]()
-      modelToUpdate.$install(function () {
-        callback(null)
-      }).catch(function () {
-        Modely.log.debug('[Modely] Failed to update "%s" model following a relationship alteration', modelNameToUpdate)
-      })
-    }, function done(err, data) {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(data)    
+    async.each(args.pending, function pendingIterator(relationship, callback) {
+      var modified = parseRelationship(Modely.models[relationship.model], relationship.args)
+      if (Array.isArray(modified) && modified.length > 0) {
+        args.modified.concat(modified)
       }
+      callback(null)
+    }, function done(err) {
+      if (err) {
+        return reject(err)
+      }
+      return resolve(args)
+    })
+  })
+}
+function parseModelRelationships(modelName) {
+  var parseArgs = {
+    model: Modely.models[modelName],
+    pending: Modely.relationshipsManager.pending[modelName] || [],
+    modified: []
+  }
+  return new Promise(function (resolve, reject) {
+    return processModelRelationships(parseArgs)
+    .then(processPendingRelationships)
+    .then(function () {
+      async.each(parseArgs.modified, function iterator(modelNameToUpdate, callback) {
+        var modelToUpdate = new Modely.models[modelNameToUpdate]()
+        modelToUpdate.$install(function () {
+          callback(null)
+        }).catch(function () {
+          callback(null)
+          Modely.log.debug('[Modely] Failed to update "%s" model following a relationship ' +
+          'alteration', modelNameToUpdate)
+        })
+      }, function done(err, data) {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(data)
+        }
+      })
+    }).catch(function (err) {
+      console.log(err)
+      resolve()
     })
     // need to check if any models have been changed and call install on those models again
   })
@@ -87,10 +108,6 @@ Object.defineProperties(relationships, {
   parse: {
     enumerable: true,
     value: parseModelRelationships
-  },
-  parseAll: {
-    enumerable: true,
-    value: parseRelationships
   }
 })
 

@@ -15,8 +15,7 @@ function auditColumns(modelName) {
       full_name: modelName + '.' + modelName + '_created_on',
       type: 'datetime',
       label: 'Created On',
-      not_null: true,
-      default: '(now() at timezone \'utc\')'
+      not_null: true
     },
     modified_by: {
       name: modelName + '_modified_by',
@@ -30,8 +29,7 @@ function auditColumns(modelName) {
       full_name: modelName + '.' + modelName + '_modified_on',
       label: 'Modified On',
       type: 'datetime',
-      not_null: true,
-      default: '(now() at timezone \'utc\')'
+      not_null: true
     }
   }
 }

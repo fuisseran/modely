@@ -8,7 +8,7 @@ var $extend = require('./extend')
 var $search = require('./search')
 var $save = require('./save')
 var $install = require('./install')
-var Modely = require('../')
+
 var basePropertyObject = {}
 var baseProperties
 
@@ -28,7 +28,7 @@ function BaseModel() {
       value: null
     }
   })
-  _this.$assignParentProperties()
+  //_this.$assignParentProperties()
 }
 
 
@@ -136,13 +136,11 @@ baseProperties.forEach(function (baseProperty) {
   basePropertyObject[baseProperty[0].toString()] = {
     enumerable: false,
     writeable: true,
-    value: baseProperty[1]
+    get: function () { return baseProperty[1] }
   }
 })
 
 Object.defineProperties(BaseModel.prototype, basePropertyObject)
+var Modely = require('../')
+module.exports = BaseModel
 
-module.exports = function () {
-  BaseModel.prototype.Modely = this
-  return BaseModel
-}
