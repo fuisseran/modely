@@ -36,16 +36,15 @@ function WhereObject(columnName, value) {
   this[columnName] = value
 }
 
-function addJoin(model, relatedFullName, params){
+function addJoin(model, relatedFullName, params) {
   var sourceModel = model
   var parts = relatedFullName.split('.')
   var targetModel = parts[0]
-  var targetField = parts[1].replace(targetModel + '_')
   var relationship = Modely.relationships[sourceModel]
   var i = params.join.length
-  var dupe = false 
+  var dupe = false
   var join
-  if (typeof relationship !== 'undefined'){
+  if (typeof relationship !== 'undefined') {
     relationship = Modely.relationships[sourceModel][targetModel]
     if (typeof relationship !== 'undefined') {
       join = relationship.join()
@@ -57,9 +56,10 @@ function addJoin(model, relatedFullName, params){
       if (!dupe) {
         params.join.push(join)
       }
-      return 
+      return
     }
-    Modely.log.error('[Modely] Unable to find relationship between "%s" and "%s"', sourceModel, targetModel)
+    Modely.log.error('[Modely] Unable to find relationship between "%s" and "%s"', sourceModel,
+    targetModel)
   }
   Modely.log.error('[Modely] Unable to find "%s"', sourceModel)
 }
@@ -87,57 +87,82 @@ function getModelProperties(model) {
   Object.keys(model._columns).forEach(function (columnName) {
     properties.push(columnName)
   })
-  if (model._audit) {
-    Object.keys(model._audit).forEach(function (columnName) {
-      properties.push(columnName)
-    })
-  }
   return properties
 }
 /**
- * Query structure
+ * Query structure notes
  *  {
- *    query :
+ *    query :[
  *      {
- *        property: time,
+ *        column: time,
  *        operator: =|LIKE|BETWEEN|>|<,
  *        value: value || [],
- *        and:[],
- *        or:[]
- *    }
+ *      },
+ *      'and',
+ *      {
+ *        column: another_one
+ *        operator:
+ *        value:
+ *      },
+ *      'or'
+ *      [{},'or',{}]
+ *    ]
  *    fields: [],
  *    limit:50,
  *    offset:0
  *  }
  *
  */
-function parseFields(model, params) {
+function parseQueryString(str) {
+  return str
+  // TODO: create the ability to parse text querys
+}
+
+function parseQuery(model, params) {
   var modelProperties = getModelProperties(model)
   var modelPropertyRegEx = new RegExp('^' + modelProperties.join('$|^') + '$')
-  if (typeof params.query !== 'undefined') {
-    Object.keys(params.query).forEach(function (field) {
-      if (modelPropertyRegEx.test(field)) {
-        params.where.push(new WhereObject(getColumnFullName(model._name, field),
-        params.query[field]))
-      } else if (/\w\.\w/.test(field)) {
-        parseRelatedField(model._name, field, params.query[field], params)
+  var newWhereArray = []
+  if (typeof params.query !== 'undefined' && typeof Array.isArray(params.query)) {
+    Object.keys(params.query).forEach(function (queryItem) {
+      var whereItem = null
+      var parts = null
+      if (typeof field === 'string') {
+        switch (queryItem.toLowerCase()) {
+          case 'and': case 'or': case 'not':
+            whereItem = queryItem.toUpperCase()
+            break
+          default:
+            whereItem = parseQueryString(queryItem)
+        }
       } else {
-        Modely.log.debug('[Modley] No property "%s" on model "%s"', field, model._name)
+        if (modelPropertyRegEx.test(queryItem.column)) {
+          whereItem = new WhereObject(queryItem)
+        } else if (/\w\.\w/.test(queryItem)) {
+          // get related column name
+          parts = queryItem.column.split('.')
+          queryItem.column = getColumnFullName(parts[0], parts[1])
+          whereItem = new WhereObject(queryItem)
+        }
+      }
+      if (whereItem !== 'null') {
+        newWhereArray.push(whereItem)  
+      } else {
+        Modely.log.debug('[Modley] No property "%s" on model "%s"', queryItem.column, model._name)
       }
     })
-  } else {
-    Object.keys(model._columns).forEach(function () {
-    })
+    return newWhereArray
   }
+  return null
 }
 
 function formatParams(params) {
   var requiredProperties = {
-    join: [],  // Join statements
-    where: [], // Where statements
-    limit: 20, // Default limit
-    offset: 0, // Default offset
-    columns: [] // Fields to return
+    join: [],     // Join statements
+    where: [],    // Where statements
+    limit: 20,    // Default limit
+    offset: 0,    // Default offset
+    columns: [],  // Fields to return
+    query: []     // The query
   }
   Object.keys(requiredProperties).forEach(function (property) {
     if (typeof params[property] === 'undefined') {
@@ -148,9 +173,7 @@ function formatParams(params) {
 
 function getRelatedColumnFullName(field) {
   var parts = field.split('.')
-  var columnName = parts.pop()
-  var modelName = parts.shift()
-  return getColumnFullName(modelName, columnName)
+  return getColumnFullName(parts[0], parts[1])
 }
 
 function parseResultRow(model, params, rowData) {
@@ -187,11 +210,6 @@ function getColumns(model, params) {
     Object.keys(model._columns).forEach(function (column) {
       params.columns.push(model._columns[column].full_name)
     })
-    if (model._audit) {
-      Object.keys(model._audit).forEach(function (column) {
-        params.columns.push(model._audit[column].full_name)
-      })
-    }
   } else {
     Object.keys(params.columns).forEach(function (fieldIndex) {
       var field = params.columns[fieldIndex]
@@ -211,7 +229,7 @@ module.exports = function modelSearch(params) {
   return new Promise(function (resolve, reject) {
     var statement = Modely.knex.from(model._name)
     formatParams(params)
-    parseFields(model, params)
+    parseQuery(model, params)
     getColumns(model, params)
     statement.column(params.columns)
     params.join.forEach(function (join) {

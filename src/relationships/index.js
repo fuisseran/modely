@@ -43,14 +43,32 @@ function parseRelationships() {
 function parseModelRelationships(modelName) {
   var model = Modely.models[modelName]
   var pending = Modely.relationshipsManager.pending[modelName]
-  model.prototype._relationships.forEach(function (relationship) {
-    parseRelationship(model, relationship)
-  })
-  if (typeof pending !== 'undefined') {
-    pending.forEach(function (relationship) {
-      parseRelationship(Modely.models[relationship.model], relationship.args)
+  var modified = []
+  return new Promise(function (resolve, reject) {
+    model.prototype._relationships.forEach(function (relationship) {
+      parseRelationship(model, relationship)
     })
-  }
+    if (typeof pending !== 'undefined') {
+      pending.forEach(function (relationship) {
+        parseRelationship(Modely.models[relationship.model], relationship.args)
+      })
+    }
+    async.each(modified, function iterator(modelNameToUpdate, callback) {
+      var modelToUpdate = new Modely.models[modelNameToUpdate]()
+      modelToUpdate.$install(function () {
+        callback(null)
+      }).catch(function () {
+        Modely.log.debug('[Modely] Failed to update "%s" model following a relationship alteration', modelNameToUpdate)
+      })
+    }, function done(err, data) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(data)    
+      }
+    })
+    // need to check if any models have been changed and call install on those models again
+  })
 }
 
 Object.defineProperties(relationships, {

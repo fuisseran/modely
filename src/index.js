@@ -16,9 +16,10 @@ var Log = require('./logger')
 var modelCollection = {}
 // var logMethods = ['info', 'error', 'warn', 'debug']
 var $BaseModel
-var Register = require('./register')
+// var Register
 var knex
 var key
+var initialised = false
 /**
 * Gets the knex instance based on the connection string
 * @param {object} connection_string
@@ -30,17 +31,18 @@ function getDatabaseConnection(connectionString, instance) {
   } else {
     knex = connectionString
   }
-  instance.knex_initialised = true
+  instance.connection_initialised = true
 }
 
 function Modely(connectionString, logger) {
   if (connectionString) {
-    getDatabaseConnection(connectionString, Modely)  
+    getDatabaseConnection(connectionString, Modely)
+    Modely.processQueue()
   }
   if (logger) {
-    this.log = logger
+    Modely.log = logger
   } else {
-    this.log = Log
+    Modely.log = Log
   }
   return Modely
 }
@@ -58,7 +60,21 @@ function loadExtensions() {
 for (key in ee) {
   Modely[key] = ee[key]
 }
-
+Object.defineProperties(Modely, {
+  connection_initialised: {
+    enumerable: true,
+    get: function () {
+      return initialised
+    },
+    set: function (val) {
+      initialised = val
+    }
+  },
+  queue: {
+    enumerable: true,
+    value: []
+  }
+})
 module.exports = Modely
 // Import requires
 $BaseModel = require('./model')
@@ -80,12 +96,21 @@ Object.defineProperties(Modely, {
     value: {}
   },
   register: {
-    value: Register
+    value: require('./register')
   },
   log: {
     enumerable: true,
     get: function () {
       return Log
+    }
+  },
+  processQueue: {
+    value: function processQueue() {
+      var self = this
+      self.queue.forEach(function (queueItem) {
+        var modelInstance = new self.models[queueItem.model]()
+        modelInstance[queueItem.fn](queueItem.args)
+      })
     }
   }
 })

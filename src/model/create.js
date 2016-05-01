@@ -17,8 +17,11 @@ module.exports = function createModel(properties) {
         return reject(new Error('InvalidPropertySupplied'))
       }
     }
+    // Emit the BeforeModelRead event
     Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
+    // Map the current data onto the data object
     dataObject = Model.$mapModelProperties(Model)
+    // Remove the primary key if it is auto generated
     if (Model._columns[Model._primary_key].auto) {
       delete dataObject[Model._columns[Model._primary_key].name]
     }

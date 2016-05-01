@@ -1,4 +1,6 @@
+// TODO: Mode this all to integration test
 var Promise = require('bluebird')
+var async = require('async')
 var knex = require('knex')({ client: 'pg',
   connection: 'postgres://test:test@localhost:5432/test'
 })
@@ -9,13 +11,11 @@ var Modely = require('../index')(knex)
 var AccountModel
 var account
 var log = console.log
+var testSchemas = require('./test-schemas')
 var testData = { type: 'type', status: 'status', username: 'usernameTest', firstname: 'firstname',
 lastname: 'lastname', display_name: 'my full name', email: 'me@me.com' }
 
-require('./account-model')
-require('./person-model')
-AccountModel = Modely.models.account
-account = new AccountModel({ id: 1 })
+
 
 
 /*
@@ -164,8 +164,25 @@ function testTags() {
   })
 }
 
+function installModels() {
+  return new Promise(function (resolve) {
+    var keys = Object.keys(testSchemas)
+    async.eachSeries(keys,
+    function iterator(key, callback) {
+      Modely.register(key, testSchemas[key]).then(function () {
+        callback(null)
+      })  
+    },
+    function done() {
+      AccountModel = Modely.models.account
+      account = new AccountModel({ id: 1 })
+      resolve()  
+    })
+  })
+}
 
-testCreate()
+installModels()
+.then(testCreate)
    .then(testSave)
   // .then(testUpdate)
    .then(testTags)

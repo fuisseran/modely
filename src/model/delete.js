@@ -5,10 +5,10 @@ var utils = require('./util')
 
 /**
  * Deletes the model
- * ?@param {integer} model_id - id of hte model to delete
+ * ?@param {integer} model_id - id of the model to delete
  */
 function deleteModel(modelId) {
-  var Model = this
+  var Model = this  // Reference to the model
   var id = modelId
   return new Promise(function (resolve, reject) {
     Model._action = 'deleting'

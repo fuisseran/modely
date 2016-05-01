@@ -228,10 +228,10 @@ function checkTable(Model) {
 module.exports = function () {
   var Model = this
   return new Promise(function (resolve, reject) {
-    // Prefix for the column names
-    var prefix = Model._name + '_'
+    // var prefix = Model._name + '_'
     // Reference to the columns
     var columns = Model._columns
+    // Prefix for the column names
     // Check if the database already has the models table
     Modely.knex.schema.hasTable(Model._name).then(function (exists) {
       if (!exists) {
@@ -240,22 +240,15 @@ module.exports = function () {
           Object.keys(columns).forEach(function (key) {
             table = processProperty(table, Model, key)
           })
-          // Add audit columns
-          if (Model._audit) {
-            table.integer(prefix + 'created_by').notNullable()
-            table.dateTime(prefix + 'created_on').notNullable()
-            table.integer(prefix + 'modified_by').notNullable()
-            table.dateTime(prefix + 'modified_on').notNullable()
-          }
-        }).then(function (result) {
+        }).then(function () {
           Modely.log.info('[Modely] Installed table "' + Model._name + '"')
-          return resolve(result)
+          Modely.relationshipsManager.parse(Model._name).then(resolve)
         }).catch(function (error) {
           return reject(error)
         })
       } else {
         return checkTable(Model).then(function () {
-          return resolve()
+          Modely.relationshipsManager.parse(Model._name).then(resolve)
         }).catch(function (error) {
           return reject(error)
         })

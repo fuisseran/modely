@@ -28,13 +28,9 @@ function BaseModel() {
       value: null
     }
   })
-  // _this.$assignParentProperties()
-  // If the model is auditied assign the audit properties
-  if (typeof _this._audit !== 'undefined' && _this._audit !== null) {
-    _this.$assignProperties(_this._audit)
-  }
+  _this.$assignParentProperties()
 }
-module.exports = BaseModel
+
 
 // Common functions for the model
 /**
@@ -145,3 +141,8 @@ baseProperties.forEach(function (baseProperty) {
 })
 
 Object.defineProperties(BaseModel.prototype, basePropertyObject)
+
+module.exports = function () {
+  BaseModel.prototype.Modely = this
+  return BaseModel
+}

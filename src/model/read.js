@@ -59,8 +59,7 @@ module.exports = function readModel(params) {
       Model[Model._primary_key] = params
       loadSingle(Model, params).then(resolve).catch(reject)
     } else {
-      // TODO: filtered load
-      resolve()
+      Model.$search(params).then(resolve).catch(reject)
     }
   })
 }
