@@ -189,8 +189,9 @@ installModels()
   .then(function () {
     var search = new Modely.models.account
     return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], 
-    limit: 50, offset: 50 })
+    limit: 50, offset: 0 })
     .then(function (result) {
+      log(JSON.stringify(result, null, 2))
       log('Done')
     }).catch(function (error) {
       console.log('Oops!')

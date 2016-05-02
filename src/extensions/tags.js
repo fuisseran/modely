@@ -178,7 +178,13 @@ function beforeSearch(params) {
 
 function searchParse(formattedRow, rowData) {
   if (typeof rowData.tags !== 'undefined') {
-    formattedRow._meta.tags = rowData.tags
+    try {
+      formattedRow._meta.tags = JSON.parse(rowData.tags)
+      formattedRow._meta.tags.error = null
+    } catch (error) {
+      formattedRow._meta.tags = []
+      formattedRow._meta.tags.error = error
+    }
     delete rowData.tags
   }
 }
