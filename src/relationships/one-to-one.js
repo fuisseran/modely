@@ -53,7 +53,7 @@ function oneToOne(modelName, args) {
   var targetModel
   var targetColumn
   var newColumn
-  var origin
+  var newColumnName
   var modified = []
   var parsedArgs = {
     source: {},
@@ -71,6 +71,7 @@ function oneToOne(modelName, args) {
     Modely.log.warn('[Modely] Missing parameters in arguments for defining relationship')
     return false
   }
+  // TODO: this needs neatening up
   common.parseArgs(args)
   parsedArgs.source.model = common.getSourceModelName(modelName, args)
   parsedArgs.target.model = common.getTargetModelName(modelName, args)
@@ -86,8 +87,16 @@ function oneToOne(modelName, args) {
     targetColumn = targetModel.prototype._columns[parsedArgs.target.column]
     newColumn = getNewColumn(sourceColumn, targetColumn, parsedArgs.source, parsedArgs.target)
     if (newColumn) {
-      modified.push(newColumn.model)
+      if (modified.indexOf(newColumn.model) === -1) {
+        modified.push(newColumn.model)
+      }
+      newColumnName = Object.keys(newColumn.column)[0]
       parsers.columns(Modely.models[newColumn.model], newColumn.column)
+      if (typeof targetColumn === 'undefined') {
+        targetColumn = newColumn.column[newColumnName]
+      } else if (typeof sourceColumn === 'undefined') {
+        sourceColumn = newColumn.column[newColumnName]
+      }
     }
     if (typeof Modely.relationships[parsedArgs.source.model] === 'undefined') {
       Modely.relationships[parsedArgs.source.model] = {}
@@ -95,42 +104,45 @@ function oneToOne(modelName, args) {
     if (typeof Modely.relationships[parsedArgs.target.model] === 'undefined') {
       Modely.relationships[parsedArgs.target.model] = {}
     }
-    if (typeof Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] === 
+    if (typeof Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] ===
     'undefined') {
-      Modely.relationships[modelName][origin] = {
+      Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] = {
         type: 'one-to-one',
         source: parsedArgs.source,
         target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' LEFT OUTER JOIN ' + parsedArgs.source.model + ' ON ' + parsedArgs.source
-            .column.fullname + ' = ' + args.target.column.fullname + ' '
+            return ' LEFT OUTER JOIN ' + parsedArgs.target.model + ' ON ' + sourceColumn.full_name
+            + ' = ' + targetColumn.full_name + ' '
           }
-          knexObj.leftOuterJoin(args.source.model, args.source.column.fullname,
-          args.target.column.fullname)
+          knexObj.leftOuterJoin(args.source.model, sourceColumn.fullname,
+          targetColumn.fullname)
         }
       }
       Modely.log.debug('[Modely] Added "one-to-one" relationship from "%s.%s" to "%s.%s"',
-      args.source.model, args.source.column, args.target.model, args.target.column)
+      parsedArgs.source.model, parsedArgs.source.column, parsedArgs.target.model, parsedArgs
+      .target.column)
     } else {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }
-    if (typeof Modely.relationships[args.target.model][args.source.model] === 'undefined') {
-      Modely.relationships[modelName][origin] = {
+    if (typeof Modely.relationships[parsedArgs.target.model][parsedArgs.source.model] ===
+    'undefined') {
+      Modely.relationships[parsedArgs.target.model][parsedArgs.source.model] = {
         type: 'one-to-one',
-        source: args.source,
-        target: args.target,
+        source: parsedArgs.source,
+        target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' LEFT OUTER JOIN ' + args.target.model + ' ON ' + args.source.column.fullname +
-            ' = ' + args.target.column.fullname + ' '
+            return ' LEFT OUTER JOIN ' + parsedArgs.source.model + ' ON ' + sourceColumn.full_name
+            + ' = ' + targetColumn.full_name + ' '
           }
-          knexObj.leftOuterJoin(args.target.model, args.source.column.fullname,
-          args.target.column.fullname)
+          knexObj.leftOuterJoin(parsedArgs.target.model, sourceColumn.full_name,
+          targetColumn.full_name)
         }
       }
       Modely.log.debug('[Modely] Added "one-to-one" relationship from "%s.%s" to "%s.%s"',
-      args.source.model, args.source.column, args.target.model, args.target.column)
+      parsedArgs.target.model, parsedArgs.target.column, parsedArgs.source.model, parsedArgs
+      .source.column)
     } else {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }

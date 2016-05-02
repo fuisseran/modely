@@ -168,9 +168,9 @@ function installModels() {
     var keys = Object.keys(testSchemas)
     async.eachSeries(keys,
     function iterator(key, callback) {
-      Modely.register(key, testSchemas[key]).then(function () {
+      return Modely.register(key, testSchemas[key]).then(function () {
         callback(null)
-      })  
+      })
     },
     function done() {
       AccountModel = Modely.models.account

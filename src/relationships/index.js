@@ -30,7 +30,7 @@ function processModelRelationships(args) {
     callback) {
       var modified = parseRelationship(model, relationship)
       if (Array.isArray(modified) && modified.length > 0) {
-        args.modified.concat(modified)
+        args.modified = args.modified.concat(modified)
       }
       callback(null)
     }, function done(err) {

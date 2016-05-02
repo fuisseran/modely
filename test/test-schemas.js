@@ -15,13 +15,7 @@ module.exports = {
     audit: true,
     indexes: [],
     defaults: {
-    },
-    relationships: [
-      {
-        type: 'one-to-many',
-        target: 'person'
-      }
-    ]
+    }
   },
   person: {
     version: 1,
@@ -29,10 +23,14 @@ module.exports = {
       id: 'integer not null auto increment primary key',
       anotherthing: 'string'
     },
-    taggable: true,
-    audit: true,
     indexes: [],
     defaults: {
-    }
+    },
+    relationships: [
+      {
+        type: 'one-to-one',
+        source: 'account'
+      }
+    ]
   }
 }

@@ -7,7 +7,8 @@ function register(name, properties) {
   var Modely = this
   var modelInstance
   var prototypeProperties
-  return new Promise(function (resolve, reject) {
+  // TODO: add rejection where required
+  return new Promise(function (resolve) {
     // Check that parameters have been defined
     if (!name || !properties) {
       throw new Error('InvalidParamters')
@@ -73,10 +74,10 @@ function register(name, properties) {
         return modelInstance.$install().then(resolve)
       }
       Modely.queue.push({ model: name, fn: '$install', args: [] })
-      resolve()
-    } else {
-      this.log.debug('[Modely] "' + name + '" is already registered')
+      return resolve()
     }
+    this.log.debug('[Modely] "' + name + '" is already registered')
+    return resolve()
   })
 }
 
