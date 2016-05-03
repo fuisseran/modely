@@ -95,8 +95,8 @@ function oneToMany(modelName, args) {
         sourceColumn = newColumn.column[newColumnName]
       }
     }
-    if (typeof Modely.relationships[modelName] === 'undefined') {
-      Modely.relationships[modelName] = {}
+    if (typeof Modely.relationships[parsedArgs.source.model] === 'undefined') {
+      Modely.relationships[parsedArgs.source.model] = {}
     }
     if (typeof Modely.relationships[parsedArgs.source.model][parsedArgs.target.model] ===
     'undefined') {
