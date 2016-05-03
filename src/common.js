@@ -45,8 +45,28 @@ function camelize(str) {
   })
 }
 
+function LoggerQueue() {
+  var self = this
+  var types = ['warn', 'info', 'debug', 'error']
+  self.queued = []
+  types.forEach(function (type) {
+    self[type] = function () {
+      self.queued.push({
+        type: type,
+        args: arguments
+      })
+    }
+  })
+  self.processLog = function (logger) {
+    self.queued.forEach(function (queueItem) {
+      logger[queueItem.type].apply(this, queueItem.args)
+    })
+  }
+}
+
 module.exports = {
   apply_core_properties: applyCoreProperties,
   inherits: inherits,
-  camelize: camelize
+  camelize: camelize,
+  LoggerQueue: LoggerQueue
 }

@@ -175,7 +175,7 @@ function installModels() {
     function done() {
       AccountModel = Modely.models.account
       account = new AccountModel({ id: 1 })
-      resolve()  
+      resolve()
     })
   })
 }
@@ -189,7 +189,7 @@ installModels()
   .then(function () {
     var search = new Modely.models.account
     return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], 
-    limit: 50, offset: 0 })
+    limit: 2, offset: 0 })
     .then(function (result) {
       log(JSON.stringify(result, null, 2))
       log('Done')

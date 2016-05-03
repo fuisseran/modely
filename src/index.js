@@ -5,7 +5,7 @@ var fs = require('fs')
 var knexLib = require('knex')
 var Promise = require('bluebird')
 var EventEmitter = require('eventemitter2').EventEmitter2
-var async = require('async')
+var LoggerQueue = require('./common').LoggerQueue
 // Map the EventEmitter Functions
 var ee = new EventEmitter({
   wildcard: true,
@@ -13,12 +13,14 @@ var ee = new EventEmitter({
 })
 // Internal modules
 var Log = require('./logger')
+var loggerInstance = null
 var modelCollection = {}
 // var logMethods = ['info', 'error', 'warn', 'debug']
 var $BaseModel
 // var Register
 var knex
 var key
+var logQueue = new LoggerQueue()
 var initialised = false
 /**
 * Gets the knex instance based on the connection string
@@ -40,10 +42,11 @@ function Modely(connectionString, logger) {
     Modely.processQueue()
   }
   if (logger) {
-    Modely.log = logger
+    loggerInstance = logger
   } else {
-    Modely.log = Log
+    loggerInstance = Log
   }
+  logQueue.processLog(loggerInstance)
   return Modely
 }
 
@@ -101,7 +104,10 @@ Object.defineProperties(Modely, {
   log: {
     enumerable: true,
     get: function () {
-      return Log
+      if (loggerInstance) {
+        return loggerInstance
+      }
+      return logQueue
     }
   },
   processQueue: {
