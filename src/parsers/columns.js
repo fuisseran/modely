@@ -16,7 +16,7 @@ function parseColumnString(Model, columnName, column) {
     type: /^([^(^ ]+)\s*/,
     size: /^\((\d+)\)\s*/,
     typeText: /^\((\w+)\)\s*/,
-    not_null: /\bnot[_ ]null\b/i,
+    not_null: /\bnot[_ ]null\b|\brequired\b/i,
     primary_key: /\bprimary key\b/i,
     auto: /\bauto[_ ]increment\b/i,
     unique: /\bunique\b/i,
