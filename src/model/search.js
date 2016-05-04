@@ -145,7 +145,7 @@ function parseQuery(model, params) {
         }
       }
       if (whereItem !== 'null') {
-        newWhereArray.push(whereItem)  
+        newWhereArray.push(whereItem)
       } else {
         Modely.log.debug('[Modley] No property "%s" on model "%s"', queryItem.column, model._name)
       }

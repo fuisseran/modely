@@ -188,8 +188,8 @@ installModels()
   // .then(testDelete)
   .then(function () {
     var search = new Modely.models.account
-    return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'], 
-    limit: 2, offset: 0 })
+    return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'],
+    limit: 2, offset: 0, query: { id: 1 } })
     .then(function (result) {
       log(JSON.stringify(result, null, 2))
       log('Done')
