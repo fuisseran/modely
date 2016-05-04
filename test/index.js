@@ -166,16 +166,12 @@ function testTags() {
 function installModels() {
   return new Promise(function (resolve) {
     var keys = Object.keys(testSchemas)
-    async.eachSeries(keys,
-    function iterator(key, callback) {
-      return Modely.register(key, testSchemas[key]).then(function () {
-        callback(null)
-      })
-    },
-    function done() {
+    return Promise.map(keys, function (key) {
+      return Modely.register(key, testSchemas[key])
+    }).then(function () {
       AccountModel = Modely.models.account
       account = new AccountModel({ id: 1 })
-      resolve()
+      return resolve()
     })
   })
 }
