@@ -3,7 +3,6 @@
 // include required npm modules
 var fs = require('fs')
 var knexLib = require('knex')
-var Promise = require('bluebird')
 var EventEmitter = require('eventemitter2').EventEmitter2
 var LoggerQueue = require('./common').LoggerQueue
 // Map the EventEmitter Functions

@@ -2,19 +2,6 @@
 var Modely = require('../')
 var Promise = require('bluebird')
 
-function checkRelationship(modelName, relationshipName) {
-  if (typeof Modely.relationships[modelName] !== 'undefined') {
-    if (typeof Modely.relationships[modelName][relationshipName] !== 'undefined') {
-      return Modely.relationships[modelName][relationshipName]
-    }
-    Modely.log.debug('[Modely] No relationships found from "%s" to "%s"', modelName,
-    relationshipName)
-    return null
-  }
-  Modely.log.debug('[Modely] No relationships have been defined for "%s"', modelName)
-  return null
-}
-
 function getColumnFullName(modelName, columnName) {
   var tmp = Modely.models[modelName]
   if (typeof tmp !== 'undefined') {
@@ -29,11 +16,41 @@ function getColumnFullName(modelName, columnName) {
   return null
 }
 
-function WhereObject(columnName, value) {
+function WhereObject(args) {
   if (!(this.constructor === WhereObject)) {
-    return new WhereObject(columnName, value)
+    return new WhereObject(args)
   }
-  this[columnName] = value
+  this.column = args.column
+  this.op = args.op || '='
+  this.value = args.value
+}
+
+WhereObject.prototype.render = function render(paramsArray) {
+  var output = ''
+  
+  switch (this.op) {
+    case 'BETWEEN':
+      output = [this.column, this.op, '?', 'AND', '?'].join(' ')
+      break
+    default:
+      output = [this.column, this.op, '?'].join(' ')
+  }
+  if (this.value === null) { 
+    switch (this.op) {
+      case '!=':
+        output = this.column + 'is not null'
+        break
+      default:
+        output = this.column + ' is null'
+    }    
+  } else {
+    if (Array.isArray(this.value)) {
+      paramsArray = paramsArray.concat(this.value)
+    } else {
+      paramsArray.push(this.value)
+    }
+  }
+  return output
 }
 
 function addJoin(model, relatedFullName, params) {
@@ -64,24 +81,6 @@ function addJoin(model, relatedFullName, params) {
   Modely.log.error('[Modely] Unable to find "%s"', sourceModel)
 }
 
-function parseRelatedField(model, fieldString, value, returnObj) {
-  var modelNames = fieldString.split('.')
-  var columnName = modelNames.pop()
-  var currentRelationship = null
-  var modelName = null
-  var previousModelName = model
-  while (modelNames.length > 0) {
-    modelName = modelNames.shift()
-    currentRelationship = checkRelationship(previousModelName, modelName)
-    if (currentRelationship) {
-      returnObj.join.push(currentRelationship.join())
-    }
-    previousModelName = currentRelationship
-    currentRelationship = null
-  }
-  returnObj.where.push(new WhereObject(getColumnFullName(modelName, columnName), value))
-}
-
 function getModelProperties(model) {
   var properties = []
   Object.keys(model._columns).forEach(function (columnName) {
@@ -95,13 +94,13 @@ function getModelProperties(model) {
  *    query :[
  *      {
  *        column: time,
- *        operator: =|LIKE|BETWEEN|>|<,
+ *        op: =|LIKE|BETWEEN|>|<,
  *        value: value || [],
  *      },
  *      'and',
  *      {
  *        column: another_one
- *        operator:
+ *        op:
  *        value:
  *      },
  *      'or'
@@ -122,22 +121,27 @@ function parseQuery(model, params) {
   var modelProperties = getModelProperties(model)
   var modelPropertyRegEx = new RegExp('^' + modelProperties.join('$|^') + '$')
   var newWhereArray = []
+  var lastStatement = null
   if (typeof params.query !== 'undefined' && typeof Array.isArray(params.query)) {
-    Object.keys(params.query).forEach(function (queryItem) {
+    params.query.forEach(function (queryItem, index) {
       var whereItem = null
       var parts = null
       if (typeof field === 'string') {
         switch (queryItem.toLowerCase()) {
           case 'and': case 'or': case 'not':
+             
             whereItem = queryItem.toUpperCase()
             break
           default:
             whereItem = parseQueryString(queryItem)
         }
+      } else if (Array.isArray(queryItem)) {
+        parseQuery()
       } else {
         if (modelPropertyRegEx.test(queryItem.column)) {
+          queryItem.column = getColumnFullName(model._name, queryItem.column)
           whereItem = new WhereObject(queryItem)
-        } else if (/\w\.\w/.test(queryItem)) {
+        } else if (/\w\.\w/.test(queryItem.column)) {
           // get related column name
           parts = queryItem.column.split('.')
           queryItem.column = getColumnFullName(parts[0], parts[1])
@@ -145,14 +149,20 @@ function parseQuery(model, params) {
         }
       }
       if (whereItem !== 'null') {
+        if (index > 0) {
+          if (typeof whereItem !== 'string' && lastStatement !== 'string') {
+            newWhereArray.push('OR')
+          }
+        }
         newWhereArray.push(whereItem)
+        lastStatement = whereItem
       } else {
         Modely.log.debug('[Modley] No property "%s" on model "%s"', queryItem.column, model._name)
       }
     })
     return newWhereArray
   }
-  return null
+  return newWhereArray
 }
 
 function formatParams(params) {
@@ -162,7 +172,8 @@ function formatParams(params) {
     limit: 20,    // Default limit
     offset: 0,    // Default offset
     columns: [],  // Fields to return
-    query: []     // The query
+    query: [],    // The query
+    parameters: [] // paramters to add to the query
   }
   Object.keys(requiredProperties).forEach(function (property) {
     if (typeof params[property] === 'undefined') {
@@ -203,7 +214,7 @@ function parseResultRow(model, params, rowData) {
 }
 
 function getColumns(model, params) {
-  var modelProperties = getModelProperties(model)
+  var modelProperties = Object.keys(model._columns)
   var modelPropertyRegEx = new RegExp('^' + modelProperties.join('$|^') + '$')
   // If there are no fields defined then grab the models fields
   if (params.columns.length === 0) {
@@ -226,15 +237,22 @@ function getColumns(model, params) {
 module.exports = function modelSearch(params) {
   var model = this
   var result
+  var processedQuery = []
   return new Promise(function (resolve, reject) {
     var statement = Modely.knex.from(model._name)
+    var whereStatment = ''
     formatParams(params)
-    parseQuery(model, params)
+    processedQuery = parseQuery(model, params)
     getColumns(model, params)
     statement.column(params.columns)
     params.join.forEach(function (join) {
       statement.joinRaw(join)
     })
+    processedQuery.forEach(function (queryItem) {
+      whereStatment += (typeof queryItem === 'string') ? queryItem : queryItem.render(params
+      .parameters)
+    })
+    statement.whereRaw(whereStatment, params.parameters) 
     // var sqlString = statement.toSQL()
     result = params
     result.sql = statement.toSQL()

@@ -17,7 +17,7 @@ var models = {
     primary_key: 'id',
     indexes: ['name', 'is_internal']
   },
-  tag_mapping: {
+  tagmap: {
     version: 1,
     auto_routes: false,
     columns: {
@@ -146,9 +146,9 @@ function registerModels() {
 function onDelete(Model) {
   if (Model._schema.taggable) {
     Model._pending_transactions.push(Model
-      ._trx('tag_mapping')
-      .where('tag_mapping_model_id', Model[Model._primary_key])
-      .where('tag_mapping_model_name', Model._name)
+      ._trx('tagmap')
+      .where('tagmap_model_id', Model[Model._primary_key])
+      .where('tagmap_model_name', Model._name)
       .del())
   }
 }
@@ -160,8 +160,8 @@ function beforeLoad(Model) {
   if (Model._schema.taggable) {
     Model._query.select(Modely.knex.raw('(SELECT \'[\' || array_to_string( array_agg(' +
     '(\'{"id":\' || tag_id ||\',"label":"\'||tag_label||\'","name":"\'||tag_name||\'"}' +
-    '\')), \',\')||\']\' FROM tag LEFT JOIN tag_mapping ON tag.tag_id = tag_mapping_tag_id ' +
-    'WHERE tag_mapping_model_id = ? AND tag_mapping_model_name=?) as tags',
+    '\')), \',\')||\']\' FROM tag LEFT JOIN tagmap ON tag.tag_id = tagmap_tag_id ' +
+    'WHERE tagmap_model_id = ? AND tagmap_model_name=?) as tags',
     [Model[Model._primary_key], Model._name]))
   }
 }
@@ -170,8 +170,8 @@ function beforeSearch(params) {
   if (params.taggable) {
     params.query.select(Modely.knex.raw('(SELECT \'[\' || array_to_string( array_agg(' +
     '(\'{"id":\' || tag_id ||\',"label":"\'||tag_label||\'","name":"\'||tag_name||\'"}' +
-    '\')), \',\')||\']\' FROM tag LEFT JOIN tag_mapping ON tag.tag_id = tag_mapping_tag_id ' +
-    'WHERE tag_mapping_model_id = ' + params.idColumnName + ' AND tag_mapping_model_name=\'' +
+    '\')), \',\')||\']\' FROM tag LEFT JOIN tagmap ON tag.tag_id = tagmap_tag_id ' +
+    'WHERE tagmap_model_id = ' + params.idColumnName + ' AND tagmap_model_name=\'' +
      params.modelName + '\') as tags'))
   }
 }
@@ -244,10 +244,10 @@ function onSave(Model) {
     // Delete removed tags from tag mappings table
     tags.remove.forEach(function (tag) {
       Model._pending_transactions.push(Model.
-        _trx('tag_mapping')
-        .where('tag_mapping_tag_id', tag.id)
-        .where('tag_mapping_tag_model_id', modelId))
-        .where('tag_mapping_model_name', modelName)
+        _trx('tagmap')
+        .where('tagmap_tag_id', tag.id)
+        .where('tagmap_tag_model_id', modelId))
+        .where('tagmap_model_name', modelName)
         .del()
     })
     // Create tags needed and add mappings
@@ -258,10 +258,10 @@ function onSave(Model) {
           tag_name: slugify(tag.label)
         }, 'tag_id').into('tag').then(function (insertResult) {
           Model._trx.insert({
-            tag_mapping_model_name: modelName,
-            tag_mapping_model_id: modelId,
-            tag_mapping_tag_id: insertResult[0]
-          }).into('tag_mapping')
+            tagmap_model_name: modelName,
+            tagmap_model_id: modelId,
+            tagmap_tag_id: insertResult[0]
+          }).into('tagmap')
         })
         )
     })
@@ -269,22 +269,22 @@ function onSave(Model) {
     tags.add.forEach(function (tag) {
       if (typeof tag.id !== 'undefined') {
         mappingsToAdd.push({
-          tag_mapping_model_name: modelName,
-          tag_mapping_model_id: modelId,
-          tag_mapping_tag_id: tag.id
+          tagmap_model_name: modelName,
+          tagmap_model_id: modelId,
+          tagmap_tag_id: tag.id
         })
       }
     })
     // Add them to the pending transactions
     if (mappingsToAdd.length > 0) {
-      Model._pending_transactions.push(Model._trx.insert(mappingsToAdd).into('tag_mapping'))
+      Model._pending_transactions.push(Model._trx.insert(mappingsToAdd).into('tagmap'))
     }
   }
 }
 
 function onRegister(Model) {
   var value = false
-  if (typeof Model.prototype._schema.taggable !== 'undefined' && 
+  if (typeof Model.prototype._schema.taggable !== 'undefined' &&
   Model.prototype._schema.taggable === true) {
     value = true
   }
