@@ -104,6 +104,9 @@ function getTargetModelName(modelName, args) {
  */
 function getSourceColumnName(model, args) {
   var Model = Modely.models[args.source.model]
+  if (typeof Model === 'undefined') {
+    return null
+  }
   if (typeof args.source.column === 'undefined' || args.source.column === null) {
     // if there is no source.column defined then assume the source column is the
     // primary key of the source model
@@ -127,7 +130,8 @@ function getSourceColumnName(model, args) {
  */
 function getTargetColumnName(model, args) {
   var Model = Modely.models[args.target.model]
-  if (typeof Model !== 'undefined' && typeof args.target.column === 'undefined' || args.target.column === null) {
+  if (typeof Model !== 'undefined' && typeof args.target.column === 'undefined' ||
+  args.target.column === null) {
     // if there is no target.column defined then assume the target column is the primary
     // key of the target model
     if (args.target.model === model) {
@@ -172,7 +176,8 @@ function copyColumn(source, target, skipProperties) {
       })
       return newColumn
     }
-    Modely.log.debug('[Modely] Failed to copy column "%s" from model "%s"', source.column, source.model)
+    Modely.log.debug('[Modely] Failed to copy column "%s" from model "%s"', source.column,
+    source.model)
     return null
   }
   Modely.log.debug('[Modely] Failed to copy column, unable to find model "%s"', source.column,

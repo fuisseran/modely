@@ -8,7 +8,7 @@ var $extend = require('./extend')
 var $search = require('./search')
 var $save = require('./save')
 var $install = require('./install')
-
+var Modely
 var basePropertyObject = {}
 var baseProperties
 
@@ -28,7 +28,7 @@ function BaseModel() {
       value: null
     }
   })
-  //_this.$assignParentProperties()
+  // _this.$assignParentProperties()
 }
 
 
@@ -129,7 +129,8 @@ baseProperties = [
   ['$processPending', processPending],           // Processes Pending transaciton on the model
   ['$mapModelProperties', mapModelProperties],   // Creates and insert object for the database
   ['$pendingTransactions', pendingTransactions], // Executes ther pendign transactions on the model
-  ['$search', $search]                           // Searchs the model
+  ['$search', $search],                          // Searchs the model
+  ['_status', 'registered']
 ]
 
 baseProperties.forEach(function (baseProperty) {
@@ -141,6 +142,5 @@ baseProperties.forEach(function (baseProperty) {
 })
 
 Object.defineProperties(BaseModel.prototype, basePropertyObject)
-var Modely = require('../')
+Modely = require('../')
 module.exports = BaseModel
-

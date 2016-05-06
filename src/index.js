@@ -114,7 +114,11 @@ Object.defineProperties(Modely, {
       var self = this
       self.queue.forEach(function (queueItem) {
         var modelInstance = new self.models[queueItem.model]()
-        modelInstance[queueItem.fn](queueItem.args)
+        if (queueItem.promiseResolve) {
+          modelInstance[queueItem.fn](queueItem.args).then(queueItem.promiseResolve)
+        } else {
+          modelInstance[queueItem.fn](queueItem.args)
+        }
       })
     }
   }

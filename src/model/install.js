@@ -196,7 +196,7 @@ function checkTable(Model) {
             Modely.log.info('[Modely] Added columm "%s" to "%s"', propertyName, Model._name)
             resolve()
           })
-          /* TODO: dropping the columns needs to be doen after modely is finished with, 
+          /* TODO: dropping the columns needs to be doen after modely is finished with,
            * should probably be called rather than automated, since it needs to be after all models
            * have been registered.
            * columnsToRemove.forEach(function (column) {
@@ -244,13 +244,19 @@ module.exports = function () {
           })
         }).then(function () {
           Modely.log.info('[Modely] Installed table "' + Model._name + '"')
-          Modely.relationshipsManager.parse(Model._name).then(resolve)
+          Modely.relationshipsManager.parse(Model._name).then(function () {
+            Modely.models[Model._name].prototype._status = 'installed'
+            resolve()
+          })
         }).catch(function (error) {
           return reject(error)
         })
       } else {
         return checkTable(Model).then(function () {
-          return Modely.relationshipsManager.parse(Model._name).then(resolve)
+          return Modely.relationshipsManager.parse(Model._name).then(function () {
+            Modely.models[Model._name].prototype._status = 'installed'
+            resolve()
+          })
         }).catch(function (error) {
           return reject(error)
         })

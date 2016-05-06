@@ -73,10 +73,9 @@ function register(name, properties) {
       if (Modely.connection_initialised) {
         return modelInstance.$install().then(resolve)
       }
-      Modely.queue.push({ model: name, fn: '$install', args: [] })
-      return resolve()
+      return Modely.queue.push({ model: name, fn: '$install', args: [], promiseResolve: resolve })
     }
-    this.log.debug('[Modely] "' + name + '" is already registered')
+    Modely.log.debug('[Modely] "' + name + '" is already registered')
     return resolve()
   })
 }

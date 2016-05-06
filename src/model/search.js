@@ -27,21 +27,21 @@ function WhereObject(args) {
 
 WhereObject.prototype.render = function render(paramsArray) {
   var output = ''
-  
+  var columnName = '"' + this.column.split('.').join('"."') + '"'
   switch (this.op) {
     case 'BETWEEN':
-      output = [this.column, this.op, '?', 'AND', '?'].join(' ')
+      output = [columnName, this.op, '?', 'AND', '?'].join(' ')
       break
     default:
-      output = [this.column, this.op, '?'].join(' ')
+      output = [columnName, this.op, '?'].join(' ')
   }
   if (this.value === null) { 
     switch (this.op) {
       case '!=':
-        output = this.column + 'is not null'
+        output = columnName + ' is not null'
         break
       default:
-        output = this.column + ' is null'
+        output = columnName + ' is null'
     }    
   } else {
     if (Array.isArray(this.value)) {
@@ -126,7 +126,7 @@ function parseQuery(model, params) {
     params.query.forEach(function (queryItem, index) {
       var whereItem = null
       var parts = null
-      if (typeof field === 'string') {
+      if (typeof queryItem === 'string') {
         switch (queryItem.toLowerCase()) {
           case 'and': case 'or': case 'not':
              
@@ -138,6 +138,12 @@ function parseQuery(model, params) {
       } else if (Array.isArray(queryItem)) {
         parseQuery()
       } else {
+        if (Object.keys(queryItem).length === 1) {
+          queryItem = {
+            column: Object.keys(queryItem)[0],
+            value: queryItem[Object.keys(queryItem)[0]]
+          }
+        }
         if (modelPropertyRegEx.test(queryItem.column)) {
           queryItem.column = getColumnFullName(model._name, queryItem.column)
           whereItem = new WhereObject(queryItem)
@@ -148,9 +154,10 @@ function parseQuery(model, params) {
           whereItem = new WhereObject(queryItem)
         }
       }
+      
       if (whereItem !== 'null') {
         if (index > 0) {
-          if (typeof whereItem !== 'string' && lastStatement !== 'string') {
+          if (typeof whereItem !== 'string' && typeof lastStatement !== 'string') {
             newWhereArray.push('OR')
           }
         }

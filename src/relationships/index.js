@@ -18,7 +18,7 @@ function parseRelationship(Model, args) {
   }
 }
 
-function relationships(args) {
+function relationships() {
   // TODO: needs to handle everything
 }
 
@@ -59,27 +59,16 @@ function processPendingRelationships(args) {
   })
 }
 
-function updateModels(modelName, callback) {
+function updateModels(modelName) {
   var modelToUpdate = new Modely.models[modelName]()
-  return modelToUpdate.$install().then(function () {
-    callback(null)
-  }).catch(function () {
-    callback(null)
+  return modelToUpdate.$install().catch(function () {
     Modely.log.debug('[Modely] Failed to update "%s" model following a relationship ' +
     'alteration', modelName)
   })
 }
 
-function processModified(parseArgs) {
-  return new Promise(function (resolve, reject) {
-    async.each(parseArgs.modified, updateModels, function done(err, data) {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(data)
-      }
-    })
-  })
+function processModified(parsedArgs) {
+  return Promise.map(parsedArgs.modified, updateModels)
 }
 
 function parseModelRelationships(modelName) {

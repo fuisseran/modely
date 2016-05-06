@@ -36,6 +36,10 @@ module.exports = function update(properties) {
       var dataObject
       Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
       dataObject = Model.$mapModelProperties(Model)
+      // needs to check to see if there are other things to update ie tags hack for now
+      if (Object.keys(dataObject).length === 0) {
+        return resolve()
+      }
       Model._status = 'update'
       // Remove the primary key from the update Object.
       delete dataObject[Model._columns[Model._primary_key].name]
@@ -49,6 +53,8 @@ module.exports = function update(properties) {
           .where(Model._columns[Model._primary_key].name, Model[Model._primary_key])
           .then(function (/* insertResponse */) {
             return utils.pendingTransactions(Model, 'Save')
+          }).catch(function (error) {
+            reject(error)
           })
           .then(function (/* updateResponse */) {
             // Clear _pending_transations property
