@@ -22,28 +22,30 @@ function checkModelIsLoaded(Model) {
 module.exports = function update(properties) {
   var Model = this
   return new Promise(function (resolve, reject) {
-    if (properties) {
-      parsers.properties(Model, properties)
-      if (Model[Model._primary_key] === 'undefined') {
-        // Check if an id has been assigned, if it hasn't reject the model
-        reject(new Error('NoIdSupplied'))
-      }
+    // Check if the model has a primary key if nto check the properties for one
+    if (typeof properties[Model._primary_key] !== 'undefined') {
+      Model[Model._primary_key] = properties[Model._primary_key]
     }
-    // Copy ._meta to ._data.values._meta
-    Model._data.values._meta = Model._meta
     // Check the model is loaded before calling the update
+    if (Model[Model._primary_key] === 'undefined') {
+      return reject(new Error('NoIdSupplied'))
+    }
     checkModelIsLoaded(Model).then(function () {
       var dataObject
+      if (properties) {
+        parsers.properties(Model, properties)
+      }
+      // Copy ._meta to ._data.values._meta
+      Model._data.values._meta = Model._meta
       Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
       dataObject = Model.$mapModelProperties(Model)
-      // needs to check to see if there are other things to update ie tags hack for now
-      if (Object.keys(dataObject).length === 0) {
-        return resolve()
-      }
       Model._status = 'update'
       // Remove the primary key from the update Object.
       delete dataObject[Model._columns[Model._primary_key].name]
       // validate here
+      if (Object.keys(dataObject).length === 0) {
+        return resolve()
+      }
       return Model.$processPending('Save').then(function (/* pendingResults*/) {
         return Modely.knex.transaction(function (trx) {
           Model._trx = trx
@@ -56,17 +58,16 @@ module.exports = function update(properties) {
           }).catch(function (error) {
             reject(error)
           })
-          .then(function (/* updateResponse */) {
-            // Clear _pending_transations property
-            Model._pending_transactions = []
-            // Reload model
-            Model.$read(Model[Model._primary_key]).then(function () {
-              resolve(Model)
-            }).catch(function (error) {
-              reject(error)
-            })
-          }).catch(function (error) {
+          .catch(function (error) {
             Modely.log.error(error)
+          })
+        }).then(function () {
+          Model._pending_transactions = []
+            // Reload model
+          Model.$read(Model[Model._primary_key]).then(function () {
+            resolve(Model)
+          }).catch(function (error) {
+            reject(error)
           })
         })
       })

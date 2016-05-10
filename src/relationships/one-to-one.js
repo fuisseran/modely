@@ -112,8 +112,9 @@ function oneToOne(modelName, args) {
         target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' LEFT OUTER JOIN ' + parsedArgs.target.model + ' ON ' + sourceColumn.full_name
-            + ' = ' + targetColumn.full_name + ' '
+            return ' LEFT OUTER JOIN "' + parsedArgs.target.model + '" ON "' + sourceColumn
+            .full_name.split('.').join('"."') + '" = "' + targetColumn.full_name.split('.')
+            .join('"."') + '" '
           }
           knexObj.leftOuterJoin(args.source.model, sourceColumn.fullname,
           targetColumn.fullname)
@@ -133,8 +134,9 @@ function oneToOne(modelName, args) {
         target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' LEFT OUTER JOIN ' + parsedArgs.source.model + ' ON ' + sourceColumn.full_name
-            + ' = ' + targetColumn.full_name + ' '
+            return ' LEFT OUTER JOIN "' + parsedArgs.source.model + '" ON "' + sourceColumn
+            .full_name.split('.').join('"."') + '" = "' + targetColumn.full_name.split('.')
+            .join('"."') + '" '
           }
           knexObj.leftOuterJoin(parsedArgs.target.model, sourceColumn.full_name,
           targetColumn.full_name)

@@ -46,9 +46,10 @@ function addManyToManyRelationships(modelName, args) {
       target: args.target,
       join: function (knexObj) {
         if (typeof knekObj === 'undefined') {
-          return ' LEFT JOIN ' + modelNames.join + ' ON ' + columns.joinSource + ' = '
-          + columns.source + ' LEFT JOIN ' + modelNames.target + ' ON ' +
-          columns.joinTarget + ' = ' + columns.target + ' '
+          return ' LEFT JOIN "' + modelNames.join + '" ON "' + columns.joinSource.split('.')
+          .join('"."') + '" = "' + columns.source.split('.').join('"."') + '" LEFT JOIN "' +
+          modelNames.target + '" ON "' + columns.joinTarget.split('.').join('"."') + '" = "' +
+          columns.target.split('.').join('"."') + '" '
         }
         knexObj.innerJoin(modelNames.join, columns.joinSource, columns.source)
         .innerJoin(modelNames.target, columns.joinTarget, columns.target)
@@ -64,9 +65,10 @@ function addManyToManyRelationships(modelName, args) {
       target: args.target,
       join: function (knexObj) {
         if (typeof knekObj === 'undefined') {
-          return ' LEFT JOIN ' + modelNames.join + ' ON ' + columns.joinTarget + ' = ' +
-          columns.target + ' LEFT JOIN ' + modelNames.source + ' ON ' + columns.joinSource +
-          ' = ' + columns.source + ' '
+          return ' LEFT JOIN "' + modelNames.join + '" ON "' + columns.joinTarget.split('.')
+          .join('"."') + '" = "' + columns.target.split('.').join('"."') + '" LEFT JOIN "' +
+          modelNames.source + '" ON "' + columns.joinSource.split('.').join('"."') + '" = "' +
+          columns.source.split('.').join('"."') + '" '
         }
         knexObj.innerJoin(modelNames.target, columns.joinTarget, columns.target)
         .innerJoin(modelNames.join, columns.joinSource, columns.source)

@@ -35,14 +35,14 @@ WhereObject.prototype.render = function render(paramsArray) {
     default:
       output = [columnName, this.op, '?'].join(' ')
   }
-  if (this.value === null) { 
+  if (this.value === null) {
     switch (this.op) {
       case '!=':
         output = columnName + ' is not null'
         break
       default:
         output = columnName + ' is null'
-    }    
+    }
   } else {
     if (Array.isArray(this.value)) {
       paramsArray = paramsArray.concat(this.value)
@@ -129,7 +129,6 @@ function parseQuery(model, params) {
       if (typeof queryItem === 'string') {
         switch (queryItem.toLowerCase()) {
           case 'and': case 'or': case 'not':
-             
             whereItem = queryItem.toUpperCase()
             break
           default:
@@ -151,10 +150,10 @@ function parseQuery(model, params) {
           // get related column name
           parts = queryItem.column.split('.')
           queryItem.column = getColumnFullName(parts[0], parts[1])
+          addJoin(model._name, queryItem.column, params)
           whereItem = new WhereObject(queryItem)
         }
       }
-      
       if (whereItem !== 'null') {
         if (index > 0) {
           if (typeof whereItem !== 'string' && typeof lastStatement !== 'string') {
@@ -259,7 +258,7 @@ module.exports = function modelSearch(params) {
       whereStatment += (typeof queryItem === 'string') ? queryItem : queryItem.render(params
       .parameters)
     })
-    statement.whereRaw(whereStatment, params.parameters) 
+    statement.whereRaw(whereStatment, params.parameters)
     // var sqlString = statement.toSQL()
     result = params
     result.sql = statement.toSQL()
