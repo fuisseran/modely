@@ -1,7 +1,7 @@
 // processes many-to-many relationships on the model
 var Modely
-var common = require('./common')
-var modelyCommon = require('../common')
+var common = require('../common')
+var modelyCommon = require('../../common')
 
 function addManyToManyRelationships(modelName, args) {
   var models = {

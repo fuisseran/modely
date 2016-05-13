@@ -1,7 +1,7 @@
 // Processes one-to-one relationships on the model
 var Modely
-var parsers = require('../parsers')
-var common = require('./common')
+var parsers = require('../../parsers')
+var common = require('../common')
 
 function getNewColumn(sourceColumn, targetColumn, source, target) {
   var newColumn = {

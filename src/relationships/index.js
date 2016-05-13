@@ -3,9 +3,9 @@ var Modely
 var fs = require('fs')
 var Promise = require('bluebird')
 var async = require('async')
-var files = fs.readdirSync(__dirname)
+var path = require('path')
+var files = fs.readdirSync(path.join(__dirname, 'types'))
 var types = {}
-
 
 function parseRelationship(Model, args) {
   if (typeof types[args.type] === 'undefined') {
@@ -114,7 +114,7 @@ module.exports = function (modelyReference) {
     var name
     if (file !== 'index.js' && file !== 'common.js') {
       name = file.replace('.js', '')
-      types[name] = require('./' + name)(Modely)
+      types[name] = require(path.join(__dirname, 'types', name))(Modely)
     }
   })
   return relationships
