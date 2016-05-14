@@ -1,10 +1,10 @@
 // TODO: Mode this all to integration test
 var Promise = require('bluebird')
 var async = require('async')
-var knex = require('knex')({ client: 'pg',
+var Modely = require('../index')({ 
+  client: 'pg',
   connection: 'postgres://test:test@localhost:5432/test'
 })
-var Modely = require('../index')(knex)
 //var Modely = require('../index')({ client: 'pg',
 //  connection: 'postgres://test:test@localhost:5432/test'
 //})

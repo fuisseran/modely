@@ -27,6 +27,7 @@ function deleteModel(modelId) {
       .then(function () {
         return utils.pendingTransactions(Model, 'Delete')
       })
+      .then(processRelationships)
       .catch(reject)
     }).then(function () {
       Model._action = null

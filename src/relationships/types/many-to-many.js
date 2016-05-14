@@ -33,6 +33,7 @@ function addManyToManyRelationships(modelName, args) {
     }
     columns[column] = columns[column].full_name
   })
+  // TODO: add reference to the joinTarget and joinSource for us in the link function.
   if (typeof Modely.relationships[args.source.model] === 'undefined') {
     Modely.relationships[args.source.model] = {}
   }
@@ -44,6 +45,7 @@ function addManyToManyRelationships(modelName, args) {
       type: 'many-to-many',
       source: args.source,
       target: args.target,
+      _table: modelName,
       join: function (knexObj) {
         if (typeof knekObj === 'undefined') {
           return ' LEFT JOIN "' + modelNames.join + '" ON "' + columns.joinSource.split('.')
@@ -117,6 +119,15 @@ function manyToMany(modelName, args) {
     .source.model, parsedArgs.target.model)
   } else {
     common.addToQueue(modelName, args)
+  }
+}
+manyToMany._link = function (sourceModel, targetModel) {
+  var relationship = Modely.relationships[sourceModel][targetModel]
+  var insertObject = {}
+  // need to determine the fields to get from the source target Model
+  
+  return Modely.knex.transaction(function (trx) {
+    
   }
 }
 
