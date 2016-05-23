@@ -1,6 +1,7 @@
 // processes many-to-many relationships on the model
 var Modely
 var common = require('../common')
+var Promise = require('bluebird')
 var modelyCommon = require('../../common')
 
 function addManyToManyRelationships(modelName, args) {
@@ -64,6 +65,7 @@ function addManyToManyRelationships(modelName, args) {
       type: 'many-to-many',
       source: args.source,
       target: args.target,
+      _table: modelName,
       join: function (knexObj) {
         if (typeof knekObj === 'undefined') {
           return ' LEFT JOIN "' + modelNames.join + '" ON "' + columns.joinTarget.split('.')
@@ -122,22 +124,46 @@ function manyToMany(modelName, args) {
 }
 
 manyToMany._link = function (sourceModel, targetModel) {
+  // TODO: will need to handle array relationships later
+  // this is generally just hacked in for now
   var relationship = Modely.relationships[sourceModel._name][targetModel._name]
+  var joinModel = new Modely.models[relationship._table]()
+  var sourceColumn = joinModel._columns[relationship.source.model + '_' +
+  relationship.source.column].name
+  var targetColumn = joinModel._columns[relationship.target.model + '_' +
+  relationship.target.column].name
+  var sourceValue = sourceModel[relationship.source.column]
+  var targetValue = targetModel[relationship.target.column]
   var insertObject = {}
-  if (relationship.source.model === sourceModel._name) {
-    insertObject[relationship.source.model + '_' + relationship.source.column] =
-    sourceModel[relationship.source.column]
-    insertObject[relationship.target.model + '_' + relationship.target.column] =
-    targetModel[relationship.target.column]
-  } else {
-    insertObject[relationship.source.model + '_' + relationship.source.column] =
-    targetModel[relationship.source.column]
-    insertObject[relationship.target.model + '_' + relationship.target.column] =
-    sourceModel[relationship.target.column]
-  }
-  return Modely.knex.transaction(function (trx) {
-    trx()
+  var whereObj = {}
+  var statement
+  insertObject[sourceColumn] = sourceValue
+  insertObject[targetColumn] = targetValue
+  whereObj[sourceColumn] = sourceValue
+  whereObj[targetColumn] = targetValue
+  statement = Modely.knex(joinModel._name).select(joinModel._columns[joinModel._primary_key].name)
+  .where(whereObj)
+  return statement.then(function (result) {
+    if (result.length === 0) {
+      return Modely.knex(joinModel._name).insert(insertObject)
+    }
+    return new Promise(function (resolve) { resolve() })
   })
+}
+manyToMany._unlink = function (sourceModel, targetModel) {
+  var relationship = Modely.relationships[sourceModel._name][targetModel._name]
+  var tblModel = new Modely.models[relationship._table]
+  var joinModel = new Modely.models[relationship._table]()
+  var sourceColumn = joinModel._columns[relationship.source.model + '_' +
+  relationship.source.column].name
+  var targetColumn = joinModel._columns[relationship.target.model + '_' +
+  relationship.target.column].name
+  var sourceValue = sourceModel[relationship.source.column]
+  var targetValue = targetModel[relationship.target.column]
+  var whereObj = {}
+  whereObj[sourceColumn] = sourceValue
+  whereObj[targetColumn] = targetValue
+  return Modely.knex(tblModel._name).where(whereObj).del()
 }
 
 module.exports = function (modelyReference) {

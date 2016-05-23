@@ -92,7 +92,9 @@ function parseModelRelationships(modelName) {
 Object.defineProperties(relationships, {
   types: {
     enumerable: true,
-    value: types
+    get: function () {
+      return types
+    }
   },
   relationships: {
     enumerable: true,

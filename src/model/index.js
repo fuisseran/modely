@@ -6,6 +6,8 @@ var $update = require('./update')
 var $delete = require('./delete')
 var $extend = require('./extend')
 var $search = require('./search')
+var $link = require('./link')
+var $unlink = require('./unlink')
 var $save = require('./save')
 var $install = require('./install')
 var Modely
@@ -130,7 +132,9 @@ baseProperties = [
   ['$mapModelProperties', mapModelProperties],   // Creates and insert object for the database
   ['$pendingTransactions', pendingTransactions], // Executes ther pendign transactions on the model
   ['$search', $search],                          // Searchs the model
-  ['_status', 'registered']
+  ['_status', 'registered'],
+  ['$link', $link],
+  ['$unlink', $unlink]
 ]
 
 baseProperties.forEach(function (baseProperty) {

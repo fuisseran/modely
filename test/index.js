@@ -187,6 +187,21 @@ installModels()
     var search = new SearchModel()
     return search.$search({ columns: ['id', 'type', 'status', 'username', 'person.anotherthing'],
     limit: 2, offset: 0, query: [{ column: 'person.anotherthing', value: null }] })
+    .then(function () {
+      var tmpModel = new Modely.models.person({ id: 0 })
+      var tmpAccount = new Modely.models.account({ id: 0 })
+      return tmpAccount.$read(25).then(
+        function () {
+          return tmpModel.$read(24)
+        }
+      ).then(
+        function () {
+          return tmpModel.$link(tmpAccount)
+        }
+      ).then(function () {
+        return tmpModel.$unlink(tmpAccount)
+      })
+    })
     .then(function (result) {
       log(JSON.stringify(result, null, 2))
       log('Done')

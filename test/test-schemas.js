@@ -28,7 +28,7 @@ module.exports = {
     },
     relationships: [
       {
-        type: 'one-to-one',
+        type: 'many-to-many',
         source: 'account'
       }
     ]

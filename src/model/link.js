@@ -1,51 +1,62 @@
 var Promise = require('bluebird')
 var Modely = require('../index')
 
-function validateArgs(sourceModel, targetModel, targetId) {
+function validateArgs(args) {
   return new Promise(function (resolve, reject) {
-    if (typeof targetModel === 'undefined') {
+    if (typeof args.targetModelName === 'undefined') {
       return reject('MissingTargetModel')
     }
-    if (typeof targetId === 'undefined') {
+    if (typeof args.targetModelId === 'undefined') {
       return reject('MissingTargetId')
     }
-    if (typeof Modely.relationships[sourceModel._name][targetModel] === 'undefined') {
+    if (typeof Modely.relationships[args.sourceModel._name][args.targetModelName] === 'undefined') {
       return reject('NoRelationship')
     }
-    if (typeof sourceModel[sourceModel._primary_key === 'undefined']) {
+    if (typeof args.sourceModel[args.sourceModel._primary_key] === 'undefined') {
       return reject('MissingSourceId')
     }
-    return resolve(sourceModel, targetModel, targetId)
+    return resolve(args)
   })
 }
 
-function loadTargetModel(sourceModel, targetModel, targetId) {
+function loadTargetModel(args) {
   return new Promise(function (resolve, reject) {
-    var instance
-    if (typeof targetModel === 'string') {
-      instance = new Modely.models[targetModel](sourceModel.$user)
-      return instance.$read(targetId).catch(reject).then(function () {
-        return resolve(sourceModel, instance)
+    if (args.targetModel === null) {
+      args.targetModel = new Modely.models[args.targetModelName](args.sourceModel.$user)
+      return args.targetModel.$read(args.targetModelId).catch(reject).then(function () {
+        return resolve(args)
       })
     }
-    return resolve(sourceModel, targetModel)
+    return resolve(args)
   })
 }
 
 function link(model, id) {
   var modelInstance = this
   var isModel = typeof model === 'object'
-  var targetModel = isModel ? model._name : model
-  var targetId = isModel ? model[model._primary_key] : id
+  var args = {
+    sourceModel: modelInstance,
+    targetModel: isModel ? model : null,
+    targetModelName: isModel ? model._name : model,
+    targetModelId: isModel ? model[model._primary_key] : id
+  }
   return new Promise(function (resolve, reject) {
-    validateArgs(modelInstance, targetModel, targetId)
+    validateArgs(args)
     .catch(reject)
     .then(loadTargetModel)
     .catch(reject)
-    .then(function (source, target) {
-      var relationship = Modely.relationships[source._name][target._name]
-      if (typeof relationship._link === 'function') {
-        return relationship._link(source, target)
+    .then(function (processedArgs) {
+      var relationship = Modely.relationships[processedArgs.sourceModel._name][processedArgs
+      .targetModel._name]
+      var fn = null
+      switch (relationship.type) {
+        case 'many-to-many':
+          fn = Modely.relationshipsManager.types['many-to-many']._link
+          break
+        default:
+      }
+      if (typeof fn === 'function') {
+        return fn(processedArgs.sourceModel, processedArgs.targetModel)
         .catch(reject)
         .then(resolve)
       }

@@ -23,7 +23,7 @@ module.exports = function update(properties) {
   var Model = this
   return new Promise(function (resolve, reject) {
     // Check if the model has a primary key if nto check the properties for one
-    if (typeof properties[Model._primary_key] !== 'undefined') {
+    if (typeof properies !== 'undefined' && properties[Model._primary_key] !== 'undefined') {
       Model[Model._primary_key] = properties[Model._primary_key]
     }
     // Check the model is loaded before calling the update
