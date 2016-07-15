@@ -1,6 +1,5 @@
 var _ = require('underscore')
 var slugify = require('underscore.string/slugify')
-var async = require('async')
 var Promise = require('bluebird')
 var Modely = null
 
@@ -72,30 +71,21 @@ function parseCurrentTags(currentTags, originalTags) {
  */
 function parseTagsToAdd(tags) {
   return new Promise(function (resolve) {
-    var result = []
-    async.each(
-      tags,
-      function iterator(tag, callback) {
-        if (typeof tag.id === 'undefined' || tag.id <= 0) {
-          tag.name = slugify(tag.label)
-          Modely.knex.raw('SELECT * FROM tag WHERE tag_name = ?', [tag.name])
-            .then(function (queryResults) {
-              if (queryResults.rows.length > 0) {
-                tag.id = queryResults.rows[0].tag_id
-                return callback()
-              }
-              result.push(tag)
-              return callback()
-            }).catch(function (error) {
-              Modely.log.error(error)
-            })
-        } else {
-          return callback()
-        }
-      },
-      function done() {
-        resolve(result)
-      })
+    Promise.map(tags, function (tag) {
+      if (typeof tag.id === 'undefined' || tag.id <= 0) {
+        tag.name = slugify(tag.label)
+        return Modely.knex.raw('SELECT * FROM tag WHERE tag_name = ?', [tag.name])
+        .then(function (queryResults) {
+          if (queryResults.rows.length > 0) {
+            tag.id = queryResults.rows[0].tag_id
+            return null
+          }
+          return tag
+        }).catch(Modely.log.error)
+      }
+    }).then(function (tagsToAdd) {
+      resolve(tagsToAdd.filter(function (element) { return element }))
+    })
   })
 }
 

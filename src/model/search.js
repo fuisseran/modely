@@ -250,6 +250,7 @@ module.exports = function modelSearch(params) {
     formatParams(params)
     processedQuery = parseQuery(model, params)
     getColumns(model, params)
+    Modely.emit('Model:' + model._name + 'BeforeSearch', model, params)
     statement.column(params.columns)
     params.join.forEach(function (join) {
       statement.joinRaw(join)
@@ -268,12 +269,6 @@ module.exports = function modelSearch(params) {
     if (params.offset > 0) {
       statement.offset(params.offset)
     }
-    Modely.emit('Modely:BeforeSearch', {
-      taggable: model._schema.taggable,
-      query: statement,
-      idColumnName: model._columns[model._primary_key].full_name,
-      modelName: model._name
-    })
     return statement.then(function (queryResult) {
       var formattedResults = []
       queryResult.forEach(function (row) {
