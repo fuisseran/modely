@@ -4,11 +4,22 @@ var Modely = require('../index')
 var utils = require('./util')
 var parsers = require('../parsers')
 
-module.exports = function createModel(properties) {
+function executeTransaction(model, reject) {
+  return model._trx(model._name)
+  .insert(model._trxData, model._columns[model._primary_key].name)
+  .then(function (insertResponse) {
+    model[model._primary_key] = insertResponse[0]
+    return utils.pendingTransactions(model, 'Save')
+  }).catch(function (err) {
+    return reject(err)
+  })
+}
+
+module.exports = function createModel(properties, options) {
   var Model = this
+  utils.parseOptions(Model, options)
   // Return promise
   return new Promise(function (resolve, reject) {
-    var dataObject
     Model._action = 'create'
     if (properties) {
       parsers.properties(Model, properties)
@@ -20,10 +31,10 @@ module.exports = function createModel(properties) {
     // Emit the BeforeModelRead event
     Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
     // Map the current data onto the data object
-    dataObject = Model.$mapModelProperties(Model)
+    Model._trxData = Model.$mapModelProperties(Model)
     // Remove the primary key if it is auto generated
     if (Model._columns[Model._primary_key].auto) {
-      delete dataObject[Model._columns[Model._primary_key].name]
+      delete Model._trxData[Model._columns[Model._primary_key].name]
     }
     // Copy ._meta to ._data.values._meta
     Model._data.values._meta = Model._meta
@@ -32,14 +43,7 @@ module.exports = function createModel(properties) {
       // validate mdoel here
       return Modely.knex.transaction(function (trx) {
         Model._trx = trx
-        return trx(Model._name)
-          .insert(dataObject, Model._columns[Model._primary_key].name)
-          .then(function (insertResponse) {
-            Model[Model._primary_key] = insertResponse[0]
-            return utils.pendingTransactions(Model, 'Save')
-          }).catch(function (err) {
-            return reject(err)
-          })
+        return executeTransaction(Model, reject)
       }).then(function () {
         // Clear _pending_transations property
         Model._pending_transactions = []

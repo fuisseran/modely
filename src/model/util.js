@@ -24,7 +24,7 @@ function defineProperties(Model, columns) {
       enumerable: true,       // Required for enumeraiton of the property
       configurable: true,
       get: function () {
-        return Model._data.values[columnDef.name] || Model._data.original[columnDef.name] 
+        return Model._data.values[columnDef.name] || Model._data.original[columnDef.name]
       },
       set: function (val) {
         if (val !== Model._data.values[columnDef.name]) {
@@ -78,11 +78,20 @@ function mapModelProperties(Model) {
   return insertObj
 }
 
+function parseOptions(model, options) {
+  if (options) {
+    if (options.transaction) {
+      model._trk = options.transaction
+    }
+  }
+}
+
 module.exports = {
   toMySqlDate: toMySqlDate,
   defineProperties: defineProperties,
   checkProperties: checkProperties,
   processPending: processPending,
   pendingTransactions: pendingTransactions,
-  mapModelProperties: mapModelProperties
+  mapModelProperties: mapModelProperties,
+  parseOptions: parseOptions
 }
