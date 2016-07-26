@@ -8,28 +8,32 @@ function auditColumns(modelName) {
       full_name: modelName + '.' + modelName + '_created_by',
       label: 'Created By',
       type: 'integer',
-      not_null: true
+      not_null: true,
+      default: 0
     },
     created_on: {
       name: modelName + '_created_on',
       full_name: modelName + '.' + modelName + '_created_on',
       type: 'datetime',
       label: 'Created On',
-      not_null: true
+      not_null: true,
+      default: new Date().toISOString()
     },
     modified_by: {
       name: modelName + '_modified_by',
       full_name: modelName + '.' + modelName + '_modified_by',
       label: 'Modified By',
       type: 'integer',
-      not_null: true
+      not_null: true,
+      default: 0
     },
     modified_on: {
       name: modelName + '_modified_on',
       full_name: modelName + '.' + modelName + '_modified_on',
       label: 'Modified On',
       type: 'datetime',
-      not_null: true
+      not_null: true,
+      default: new Date().toISOString()
     }
   }
 }

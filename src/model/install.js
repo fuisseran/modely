@@ -62,7 +62,7 @@ function processProperty(table, Model, propertyName) {
       default:
     }
     newColumn = table[func].apply(table, args)
-    if (column.default) {
+    if (column.default !== 'undefined' || column.default !== null) {
       newColumn.defaultTo(column.default)
     }
     if (column.not_null === true) {
@@ -140,10 +140,12 @@ function checkIndexes(Model) {
         }).then(function () {
           resolve()
         }).catch(function (err) {
+          Modely.log.error('[MODELY] An error occured while checking indexes on "%s"', Model._name)
           Modely.log.error(err)
           resolve()
         })
       }).catch(function (err) {
+        Modely.log.error('[MODELY] An error occured while reading indexes on "%s"', Model._name)
         Modely.log.error(err)
         resolve()
       })
@@ -205,7 +207,8 @@ function checkTable(Model) {
            * })
            */
         }).catch(function (err) {
-          Modely.log.error(err)
+          Modely.log.error('[MODELY] An error occured while atempting to modify "%s"', Model._name)
+          Modely.log.error(JSON.stringify(err, null, 2))
         })
           .then(function () {
             return checkIndexes(Model)
