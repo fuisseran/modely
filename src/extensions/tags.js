@@ -236,9 +236,9 @@ function onSave(Model) {
       Model._pending_transactions.push(Model.
         _trx('tagmap')
         .where('tagmap_tag_id', tag.id)
-        .where('tagmap_tag_model_id', modelId))
+        .where('tagmap_model_id', modelId)
         .where('tagmap_model_name', modelName)
-        .del()
+        .del())
     })
     // Create tags needed and add mappings
     tags.create.forEach(function (tag) {
