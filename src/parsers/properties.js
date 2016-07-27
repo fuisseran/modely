@@ -1,10 +1,19 @@
-module.exports = function (Model, Properties) {
+module.exports = function (Model, properties) {
   var nonCoreProperties = {}
-  Object.keys(Properties).forEach(function (property) {
+  Object.keys(properties).forEach(function (property) {
     if (typeof Model._columns[property] !== 'undefined') {
-      Model[property] = Properties[property]
+      Model[property] = properties[property]
     } else {
-      nonCoreProperties[property] = Properties[property]
+      if (property === '_meta') {
+        if (typeof Model._data.values._meta === 'undefined') {
+          Model._data.values._meta = {}
+        }
+        Object.keys(properties._meta).forEach(function (metaProperty) {
+          Model._data.values._meta[metaProperty] = properties[property][metaProperty]
+        })
+      } else {
+        nonCoreProperties[property] = properties[property]
+      }
     }
   })
   Model._raw_properties = nonCoreProperties
