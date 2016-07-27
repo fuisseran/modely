@@ -20,10 +20,6 @@ function BaseModel() {
   Modely.emit('Model:' + _this._name + ':OnInitialise', _this)
   // Define the base properties for the Model Object
   _this.$assignProperties(_this._columns)
-  Object.defineProperty(_this, '_meta', {
-    enumerable: true,
-    value: {}
-  })
   Object.defineProperties(_this, {
     _raw_properties: {
       enumerable: false,
@@ -62,7 +58,7 @@ function assignProperties(columns) {
   // add _meta
   Object.defineProperty(Model, '_meta', {
     enumerable: true,       // Required for enumeraiton of the property
-    configurable: true,
+    configurable: false,
     get: function () {
       if (typeof Model._data.values._meta === 'undefined') {
         return Model._data.original._meta
