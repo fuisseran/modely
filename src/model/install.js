@@ -194,18 +194,34 @@ function checkTable(Model) {
         })
         return Modely.knex.schema.table(Model._name, function (table) {
           Object.keys(newSchema.columns).forEach(function (propertyName) {
+            var cacheIndex
+            var columnName = Model._name + '_' + propertyName
             processProperty(table, Model, propertyName)
             Modely.log.info('[Modely] Added columm "%s" to "%s"', propertyName, Model._name)
+            if (typeof Modely._cache.redundentColumns[Model._name] !== 'undefined') {
+              cacheIndex = Modely._cache.redundentColumns[Model._name].indexOf(columnName)
+              if (cacheIndex > -1) {
+                Modely._cache.redundentColumns[Model._name].splice(cacheIndex, 1)
+                Modely.log.debug('Removed "%s" from redundent columns cache', columnName)
+                // remove model if there are no more redundent columns
+                if (Modely._cache.redundentColumns[Model._name].length === 0) {
+                  delete Modely._cache.redundentColumns[Model._name]
+                }
+              }
+            }
             resolve()
           })
-          /* TODO: dropping the columns needs to be doen after modely is finished with,
-           * should probably be called rather than automated, since it needs to be after all models
-           * have been registered.
-           * columnsToRemove.forEach(function (column) {
-           *   table.dropColumn(column)
-           *   Modely.log.info('[Modely] Dropped column "%s" from "%s"', column, Model._name)
-           * })
-           */
+          if (columnsToRemove.length > 0) {
+            if (typeof Modely._cache.redundentColumns[Model._name] === 'undefined') {
+              Modely._cache.redundentColumns[Model._name] = []
+            }
+            columnsToRemove.forEach(function (column) {
+              if (Modely._cache.redundentColumns[Model._name].indexOf(column) !== -1) {
+                Modely._cache.redundentColumns[Model._name].push(column)
+              }
+              Modely.log.info('[Modely] Added column "%s" from "%s" to redundent column cache', column, Model._name)
+            })
+          }
         }).catch(function (err) {
           Modely.log.error('[MODELY] An error occured while atempting to modify "%s"', Model._name)
           Modely.log.error(JSON.stringify(err, null, 2))
