@@ -86,6 +86,11 @@ Object.defineProperties(Modely, {
       return modelCollection
     }
   },
+  _cache: {
+    value: {
+      redundentColumns: {}
+    }
+  },
   BaseModel: {
     value: $BaseModel
   },
