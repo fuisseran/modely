@@ -107,9 +107,13 @@ function getTagOperation(Model) {
     addTags = parseCurrentTags(currentTags, originalTags)
     parseTagsToAdd(addTags).then(function (createTags) {
       resolve({
-        create: createTags || [],
+        create: createTags.filter(function (tag) {
+          return typeof tag.id !== 'undefined' && tag.id > 0 ? null : tag
+        }) || [],
         remove: removeTags,
-        add: addTags
+        add: addTags.filter(function (tag) {
+          return typeof tag.id !== 'undefined' && tag.id > 0 ? tag : null
+        })
       })
     }).catch(function () {
       resolve({
@@ -247,7 +251,7 @@ function onSave(Model) {
           tag_label: tag.label,
           tag_name: slugify(tag.label)
         }, 'tag_id').into('tag').then(function (insertResult) {
-          Model._trx.insert({
+          return Model._trx.insert({
             tagmap_model_name: modelName,
             tagmap_model_id: modelId,
             tagmap_tag_id: insertResult[0]
@@ -257,7 +261,7 @@ function onSave(Model) {
     })
     // Build array or remaining tags to be added
     tags.add.forEach(function (tag) {
-      if (typeof tag.id !== 'undefined') {
+      if (typeof tag.id !== 'undefined' && tag.id > 0) {
         mappingsToAdd.push({
           tagmap_model_name: modelName,
           tagmap_model_id: modelId,

@@ -60,10 +60,18 @@ function assignProperties(columns) {
     enumerable: true,       // Required for enumeraiton of the property
     configurable: false,
     get: function () {
-      if (typeof Model._data.values._meta === 'undefined') {
-        return Model._data.original._meta
+      var mergedData = {}
+      Object.keys(Model._data.original._meta)
+        .forEach(function(key){
+          mergedData[key] = Model._data.original._meta[key]
+        })
+      if (typeof Model._data.values._meta !== 'undefined') {
+        Object.keys(Model._data.values._meta)
+        .forEach(function(key){
+          mergedData[key] = Model._data.values._meta[key]
+        })
       }
-      return Model._data.values._meta
+      return mergedData
     }
   })
 }

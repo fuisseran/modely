@@ -197,7 +197,7 @@ function checkTable(Model) {
             var cacheIndex
             var columnName = Model._name + '_' + propertyName
             processProperty(table, Model, propertyName)
-            Modely.log.info('[Modely] Added columm "%s" to "%s"', propertyName, Model._name)
+            Modely.log.debug('[Modely] Added columm "%s" to "%s"', propertyName, Model._name)
             if (typeof Modely._cache.redundentColumns[Model._name] !== 'undefined') {
               cacheIndex = Modely._cache.redundentColumns[Model._name].indexOf(columnName)
               if (cacheIndex > -1) {
@@ -219,7 +219,7 @@ function checkTable(Model) {
               if (Modely._cache.redundentColumns[Model._name].indexOf(column) !== -1) {
                 Modely._cache.redundentColumns[Model._name].push(column)
               }
-              Modely.log.info('[Modely] Added column "%s" from "%s" to redundent column cache', column, Model._name)
+              Modely.log.debug('[Modely] Added column "%s" from "%s" to redundent column cache', column, Model._name)
             })
           }
         }).catch(function (err) {

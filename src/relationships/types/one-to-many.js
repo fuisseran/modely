@@ -29,10 +29,14 @@ function getNewColumn(sourceColumn, targetColumn, source, target) {
     newColumn.column[target.column] = {
       type: sourceColumn.type,
       name: target.model + '_' + target.column,
-      fullname: target.model + '.' + target.model + '_' + target.column,
-      not_null: true
+      fullname: target.model + '.' + target.model + '_' + target.column
     }
-
+    if (target.required) {
+      newColumn.column[target.column].not_null = target.required
+    }
+    if (typeof target.default !== 'undefined') {
+      newColumn.column[target.column].default = target.default
+    }
     if (sourceColumn.size) {
       newColumn.column[targetColumn].size = sourceColumn.size
     }
@@ -72,6 +76,11 @@ function oneToMany(modelName, args) {
   common.parseArgs(args)
   parsedArgs.source.column = args.source.column
   parsedArgs.target.column = args.target.column
+  parsedArgs.target.required = typeof args.required !== 'undefined' ? args.required : true
+  if (typeof args.default !== 'undefined') {
+    debugger
+    parsedArgs.target.default = args.default
+  }
   parsedArgs.source.model = common.getSourceModelName(modelName, args)
   parsedArgs.target.model = common.getTargetModelName(modelName, args)
   parsedArgs.source.column = common.getSourceColumnName(modelName, parsedArgs)

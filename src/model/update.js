@@ -35,8 +35,6 @@ module.exports = function update(properties) {
       if (properties) {
         parsers.properties(Model, properties)
       }
-      // Copy ._meta to ._data.values._meta
-      Model._data.values._meta = Model._meta
       Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
       dataObject = Model.$mapModelProperties(Model)
       Model._status = 'update'
