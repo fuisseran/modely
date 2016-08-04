@@ -78,7 +78,6 @@ function oneToMany(modelName, args) {
   parsedArgs.target.column = args.target.column
   parsedArgs.target.required = typeof args.required !== 'undefined' ? args.required : true
   if (typeof args.default !== 'undefined') {
-    debugger
     parsedArgs.target.default = args.default
   }
   parsedArgs.source.model = common.getSourceModelName(modelName, args)

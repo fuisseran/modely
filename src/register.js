@@ -53,7 +53,8 @@ function register(name, properties) {
         ['_relationships', properties.relationships || []],      /* Relationships of the object */
         ['_data_object', null],   /* Object to use in db transaction for inserting and updating */
         ['_row_cache', null],                                     /* Used to store raw row data */
-        ['_stash', {}]
+        ['_stash', {}],
+        ['_trxData', {}]
       ]
       // Assign the prototype properties
       prototypeProperties.forEach(function (item) {

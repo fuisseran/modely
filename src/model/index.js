@@ -61,10 +61,12 @@ function assignProperties(columns) {
     configurable: false,
     get: function () {
       var mergedData = {}
-      Object.keys(Model._data.original._meta)
+      if(typeof Model._data.original._meta !== 'undefined'){
+        Object.keys(Model._data.original._meta)
         .forEach(function(key){
           mergedData[key] = Model._data.original._meta[key]
         })
+      }
       if (typeof Model._data.values._meta !== 'undefined') {
         Object.keys(Model._data.values._meta)
         .forEach(function(key){
@@ -144,7 +146,7 @@ baseProperties = [
 baseProperties.forEach(function (baseProperty) {
   basePropertyObject[baseProperty[0].toString()] = {
     enumerable: false,
-    writeable: true,
+    writeable: false,
     get: function () { return baseProperty[1] }
   }
 })

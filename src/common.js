@@ -13,7 +13,8 @@ function applyCoreProperties(Model) {
     ['_pending', []],                         /* Pending operations to be performed on the model */
     ['_query', null],                                               /* Current query being built */
     ['_row_cache', null],                                         /* Current row being processed */
-    ['_stash', {}]          /* Universal location for extensions to store data during operations */
+    ['_stash', {}],         /* Universal location for extensions to store data during operations */
+    ['_trxData', null]
   ]
 
   props.forEach(function (item) {

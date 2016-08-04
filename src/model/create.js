@@ -4,14 +4,12 @@ var Modely = require('../index')
 var utils = require('./util')
 var parsers = require('../parsers')
 
-function executeTransaction(model, reject) {
+function executeTransaction(model) {
   return model._trx(model._name)
   .insert(model._trxData, model._columns[model._primary_key].name)
   .then(function (insertResponse) {
     model[model._primary_key] = insertResponse[0]
     return utils.pendingTransactions(model, 'Save')
-  }).catch(function (err) {
-    return reject(err)
   })
 }
 
@@ -43,7 +41,7 @@ module.exports = function createModel(properties, options) {
       // validate mdoel here
       return Modely.knex.transaction(function (trx) {
         Model._trx = trx
-        return executeTransaction(Model, reject)
+        return executeTransaction(Model, reject).catch(reject)
       }).then(function () {
         // Clear _pending_transations property
         Model._pending_transactions = []

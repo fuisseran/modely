@@ -20,7 +20,8 @@ function parseColumnString(Model, columnName, column) {
     primary_key: /\bprimary key\b/i,
     auto: /\bauto[_ ]increment\b/i,
     unique: /\bunique\b/i,
-    index: /\bindex\b/
+    index: /\bindex\b/,
+    label: /label\(([^)]*)\)/
   }
   var $1
   // Get column type
@@ -51,6 +52,10 @@ function parseColumnString(Model, columnName, column) {
   // Check for "not null"
   if (rx.not_null.exec(column)) {
     properties.not_null = true
+  }
+  if ($1 = rx.label.exec(column)) {
+    properties.label = $1[1]
+    column = column.replace(rx.label, '')
   }
   if (rx.index.exec(column)) {
     Model._prototype._indexes.push(columnName)
