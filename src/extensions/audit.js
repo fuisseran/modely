@@ -1,7 +1,7 @@
 // TODO: Convert audit into an extension
 var Modely
 
-function auditColumns(modelName) { 
+function auditColumns(modelName) {
   return {
     created_by: {
       name: modelName + '_created_by',
@@ -50,8 +50,8 @@ function beforePropertyRead(Model) {
 
 function beforeRegistration(modelName, properties) {
   var columns = auditColumns(modelName)
-  if (typeof properties.taggable !== 'undefined'
-  && properties.taggable === true) {
+  if (typeof properties.audit !== 'undefined'
+  && properties.audit === true) {
     Object.keys(columns).forEach(function (columnName) {
       properties.columns[columnName] = columns[columnName]
     })
@@ -59,8 +59,8 @@ function beforeRegistration(modelName, properties) {
 }
 
 function afterRegistration(Model) {
-  if (typeof Model.prototype._schema.taggable !== 'undefined'
-  && Model.prototype._schema.taggable === true) {
+  if (typeof Model.prototype._schema.audit !== 'undefined'
+  && Model.prototype._schema.audit === true) {
     Object.defineProperty(Model.prototype, '_audit', {
       enumerable: false,
       configurable: false,

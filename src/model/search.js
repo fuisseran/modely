@@ -32,6 +32,9 @@ WhereObject.prototype.render = function render(paramsArray) {
     case 'BETWEEN':
       output = [columnName, this.op, '?', 'AND', '?'].join(' ')
       break
+    case '!=':
+      output = ['NOT', columnName, '=', '?'].join(' ')
+      break
     default:
       output = [columnName, this.op, '?'].join(' ')
   }
@@ -173,13 +176,14 @@ function parseQuery(model, params) {
 
 function formatParams(params) {
   var requiredProperties = {
-    join: [],     // Join statements
-    where: [],    // Where statements
-    limit: 20,    // Default limit
-    offset: 0,    // Default offset
-    columns: [],  // Fields to return
-    query: [],    // The query
-    parameters: [] // paramters to add to the query
+    join: [],       // Join statements
+    where: [],      // Where statements
+    limit: 20,      // Default limit
+    offset: 0,      // Default offset
+    columns: [],    // Fields to return
+    query: [],      // The query
+    parameters: [],  // paramters to add to the query
+    orderBy: []
   }
   Object.keys(requiredProperties).forEach(function (property) {
     if (typeof params[property] === 'undefined') {
@@ -199,7 +203,7 @@ function parseResultRow(model, params, rowData) {
     }
   }
   var modelPrefix = model._name + '_'
-  Modely.emit('Modely:SearchRowParse', formattedRow, rowData)
+  Modely.emit('Model:' + model._name + ':BeforeSearchRowParse', formattedRow, rowData)
   Object.keys(rowData).forEach(function (key) {
     var data = rowData[key]
     var property
@@ -216,6 +220,7 @@ function parseResultRow(model, params, rowData) {
       formattedRow[subModel][property] = data
     }
   })
+  Modely.emit('Model:' + model._name + ':AfterSearchRowParse', formattedRow, rowData)
   return formattedRow
 }
 
@@ -240,36 +245,58 @@ function getColumns(model, params) {
   }
 }
 
-module.exports = function modelSearch(params) {
+module.exports = function modelSearch(params, options) {
   var model = this
   var result
+  var whereStrings = []
   var processedQuery = []
   return new Promise(function (resolve, reject) {
-    var statement = Modely.knex.from(model._name)
+    var i = 0
     var whereStatment = ''
+    model._query = Modely.knex.from(model._name)
     formatParams(params)
     processedQuery = parseQuery(model, params)
     getColumns(model, params)
-    Modely.emit('Model:' + model._name + 'BeforeSearch', model, params)
-    statement.column(params.columns)
+    Modely.emit('Model:' + model._name + ':BeforeSearch', model, params)
+    if (options) {
+      if (options.columns && Array.isArray(options.columns)) {
+        params.columns = params.columns.concat(options.columns)
+      }
+      if (options.join && Array.isArray(options.join)) {
+        params.join = params.join.concat(options.join)
+      }
+    }
+    model._query.select(params.columns)
     params.join.forEach(function (join) {
-      statement.joinRaw(join)
+      model._query.joinRaw(join)
+    })
+    params.orderBy.forEach(function (item) {
+      if (Array.isArray(item) && item.length < 3) {
+        model._query.orderBy(item[0], item[1] || null)
+      } else if (typeof item === 'string') {
+        model._query.orderByRaw(item)
+      } else {
+        Modely.log.warn('Ignored "%s" in order by clause', item)
+      }
     })
     processedQuery.forEach(function (queryItem) {
-      whereStatment += (typeof queryItem === 'string') ? queryItem : queryItem.render(params
-      .parameters)
+      whereStrings.push((typeof queryItem === 'string') ? queryItem : queryItem.render(params
+      .parameters))
     })
-    statement.whereRaw(whereStatment, params.parameters)
+    whereStatment = whereStrings.join(' ')
+    model._query.whereRaw(whereStatment, params.parameters)
     // var sqlString = statement.toSQL()
     result = params
-    result.sql = statement.toSQL()
+    if (process.env.NODE_ENV === 'development') {
+      result.sql = model._query.toSQL()
+    }
     if (params.limit > 0) {
-      statement.limit(params.limit)
+      model._query.limit(params.limit)
     }
     if (params.offset > 0) {
-      statement.offset(params.offset)
+      model._query.offset(params.offset)
     }
-    return statement.then(function (queryResult) {
+    return model._query.then(function (queryResult) {
       var formattedResults = []
       queryResult.forEach(function (row) {
         var formattedRow = parseResultRow(model, params, row)
@@ -277,6 +304,14 @@ module.exports = function modelSearch(params) {
           formattedResults.push(formattedRow)
         }
       })
+      // Check that there are no objects that can cause circular reference errors in the columns
+      // This fixes issue with nested raw statements in the columns array
+      i = params.columns.length
+      while (i--) {
+        if (typeof params.columns[i] !== 'string') {
+          params.columns[i] = params.columns[i].toString()
+        }
+      }
       result.rows = formattedResults
       result.error = null
       return resolve(result)

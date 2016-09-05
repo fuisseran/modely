@@ -219,7 +219,8 @@ function checkTable(Model) {
               if (Modely._cache.redundentColumns[Model._name].indexOf(column) !== -1) {
                 Modely._cache.redundentColumns[Model._name].push(column)
               }
-              Modely.log.debug('[Modely] Added column "%s" from "%s" to redundent column cache', column, Model._name)
+              Modely.log.debug('[Modely] Added column "%s" from "%s" to redundent column cache',
+              column, Model._name)
             })
           }
         }).catch(function (err) {

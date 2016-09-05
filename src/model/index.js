@@ -61,15 +61,15 @@ function assignProperties(columns) {
     configurable: false,
     get: function () {
       var mergedData = {}
-      if(typeof Model._data.original._meta !== 'undefined'){
+      if (typeof Model._data.original._meta !== 'undefined') {
         Object.keys(Model._data.original._meta)
-        .forEach(function(key){
+        .forEach(function (key) {
           mergedData[key] = Model._data.original._meta[key]
         })
       }
       if (typeof Model._data.values._meta !== 'undefined') {
         Object.keys(Model._data.values._meta)
-        .forEach(function(key){
+        .forEach(function (key) {
           mergedData[key] = Model._data.values._meta[key]
         })
       }

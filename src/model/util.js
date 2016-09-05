@@ -56,6 +56,7 @@ function processPending(Model, action) {
 }
 
 function pendingTransactions(Model, action) {
+  Model._pending_transactions = []
   Modely.emit('Model:' + Model._name + ':On' + action, Model)
   if (Model._pending_transactions.length > 0) {
     return Promise.map(Model._pending_transactions, function (saveTransaction) {

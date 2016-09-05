@@ -19,6 +19,13 @@ function checkModelIsLoaded(Model) {
   })
 }
 
+function executeUpdateTransaction(model) {
+  return model._trx(model._name)
+    .update(model._trxData)
+    .into(model._name)
+    .where(model._columns[model._primary_key].name, model[model._primary_key])
+}
+
 module.exports = function update(properties) {
   var Model = this
   return new Promise(function (resolve, reject) {
@@ -31,29 +38,30 @@ module.exports = function update(properties) {
       return reject(new Error('NoIdSupplied'))
     }
     checkModelIsLoaded(Model).then(function () {
-      var dataObject
       if (properties) {
         parsers.properties(Model, properties)
       }
       Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
-      dataObject = Model.$mapModelProperties(Model)
-      Model._status = 'update'
+      Model._trxData = Model.$mapModelProperties(Model)
+      Model._status = 'update' // need to check which one to keep
+      Model._action = 'update'
       // Remove the primary key from the update Object.
-      delete dataObject[Model._columns[Model._primary_key].name]
+      delete Model._trxData[Model._columns[Model._primary_key].name]
       // validate here
-      if (Object.keys(dataObject).length === 0) {
+      if (Object.keys(Model._trxData).length === 0) {
         return resolve()
       }
       return Model.$processPending('Save').then(function (/* pendingResults*/) {
         return Modely.knex.transaction(function (trx) {
           Model._trx = trx
-          return trx(Model._name)
-          .update(dataObject)
-          .into(Model._name)
-          .where(Model._columns[Model._primary_key].name, Model[Model._primary_key])
+          return utils.pendingTransactions(Model, 'PreSaveTransaction')
+          .then(function () {
+            return executeUpdateTransaction(Model)
+          })
           .then(function (/* insertResponse */) {
             return utils.pendingTransactions(Model, 'Save')
-          }).catch(function (error) {
+          })
+          .catch(function (error) {
             reject(error)
           })
           .catch(function (error) {

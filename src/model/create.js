@@ -4,7 +4,7 @@ var Modely = require('../index')
 var utils = require('./util')
 var parsers = require('../parsers')
 
-function executeTransaction(model) {
+function executeInsertTransaction(model) {
   return model._trx(model._name)
   .insert(model._trxData, model._columns[model._primary_key].name)
   .then(function (insertResponse) {
@@ -39,21 +39,33 @@ module.exports = function createModel(properties, options) {
     // Process any changes to be made to the object before transactions begin.
     return Model.$processPending(Model, 'Save').then(function () {
       // validate mdoel here
-      return Modely.knex.transaction(function (trx) {
-        Model._trx = trx
-        return executeTransaction(Model, reject).catch(reject)
-      }).then(function () {
-        // Clear _pending_transations property
-        Model._pending_transactions = []
-        // Reload the model to get the meta data then resolve passing the Model back as the result
-        return Model.$read(Model.id).then(function () {
-          Model._action = null
-          return resolve(Model)
-        }).catch(function (error) {
-          Model._action = null
-          return reject(error)
+      if (Modely._trx) {
+        return utils.pendingTransactions(Model, 'PreSaveTransaction')
+        .then(function () {
+          return executeInsertTransaction(Model)
         })
-      })
+      } else {
+        return Modely.knex.transaction(function (trx) {
+          Model._trx = trx
+          return utils.pendingTransactions(Model, 'PreSaveTransaction')
+          .then(function () {
+            return executeInsertTransaction(Model).catch(reject)
+          })
+        }).then(function () {
+          // Clear _pending_transations property
+          Model._pending_transactions = []
+          // Reload the model to get the meta data then resolve passing the Model back as the result
+          return Model.$read(Model.id).then(function () {
+            Model._action = null
+            return resolve(Model)
+          }).catch(function (error) {
+            Model._action = null
+            return reject(error)
+          })
+        }).catch(function (err) {
+          reject(err)
+        })
+      }
     })
   })
 }

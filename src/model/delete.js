@@ -18,6 +18,9 @@ function deleteModel(modelId) {
     if (id === 'undefined') {
       reject(new Error('IdNotDefined'))
     }
+    if (typeof Model[Model._primary_key] === 'undefined') {
+      Model[Model._primary_key] = id
+    }
     Model.$processPending(Model, 'Delete')
     return Modely.knex.transaction(function (trx) {
       Model._trx = trx
