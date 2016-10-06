@@ -8,13 +8,13 @@ var Modely = require('../')
  * @param {BaseModel} Model - the model instance to check
  */
 function checkModelIsLoaded(Model) {
-  return new Promise(function (resolve, reject) {
+  return new Promise((resolve, reject) => {
     if (Model._status !== 'loaded') {
-      Model.$read(Model[Model._primary_key]).then(resolve).catch(function () {
-        reject(new Error('UnableToLoadModel'))
-      })
+      Model.$read(Model[Model._primary_key])
+      .then(() => { return resolve() })
+      .catch(() => { reject(new Error('UnableToLoadModel')) })
     } else {
-      resolve()
+      return resolve()
     }
   })
 }
@@ -24,10 +24,14 @@ function executeUpdateTransaction(model) {
     .update(model._trxData)
     .into(model._name)
     .where(model._columns[model._primary_key].name, model[model._primary_key])
+    .then(() => {
+      return utils.pendingTransactions(model, 'Save')
+    })
 }
 
-module.exports = function update(properties) {
+module.exports = function update(properties, options) {
   var Model = this
+  utils.parseOptions(Model, options)
   return new Promise(function (resolve, reject) {
     // Check if the model has a primary key if nto check the properties for one
     if (typeof properties !== 'undefined' && properties[Model._primary_key] !== 'undefined') {
@@ -52,32 +56,31 @@ module.exports = function update(properties) {
         return resolve()
       }
       return Model.$processPending('Save').then(function (/* pendingResults*/) {
-        return Modely.knex.transaction(function (trx) {
-          Model._trx = trx
+        if (Model._trx) {
           return utils.pendingTransactions(Model, 'PreSaveTransaction')
           .then(function () {
-            return executeUpdateTransaction(Model)
+            return executeUpdateTransaction(Model).then(resolve)
           })
-          .then(function (/* insertResponse */) {
-            return utils.pendingTransactions(Model, 'Save')
+        } else {
+          return Modely.knex.transaction(function (trx) {
+            Model._trx = trx
+            return utils.pendingTransactions(Model, 'PreSaveTransaction')
+              .then(() => { return executeUpdateTransaction(Model) })
+              .then(() => { return utils.pendingTransactions(Model, 'Save') })
+              .catch(error => {
+                Modely.log.error(error) 
+                return reject(error) 
+              })
+          }).then(function () {
+            Model._pending_transactions = []
+              // Reload model
+            Model.$read(Model[Model._primary_key])
+              .then(() => { resolve(Model) })
+              .catch(error => { reject(error) })
           })
-          .catch(function (error) {
-            reject(error)
-          })
-          .catch(function (error) {
-            Modely.log.error(error)
-          })
-        }).then(function () {
-          Model._pending_transactions = []
-            // Reload model
-          Model.$read(Model[Model._primary_key]).then(function () {
-            resolve(Model)
-          }).catch(function (error) {
-            reject(error)
-          })
-        })
+        }
       })
-    }).catch(function (error) {
+    }).catch(error => {
       Model.log.error(error)
       reject(error)
     })

@@ -227,12 +227,8 @@ function checkTable(Model) {
           Modely.log.error('[MODELY] An error occured while atempting to modify "%s"', Model._name)
           Modely.log.error(JSON.stringify(err, null, 2))
         })
-          .then(function () {
-            return checkIndexes(Model)
-          })
-          .then(function () {
-            return resolve()
-          })
+        .then(() => { return checkIndexes(Model) })
+        .then(() => { return resolve() })
       }).catch(function (err) {
         Model.log.error('[MODELY] Unable to get table schema to check against')
         Model.log.error(err)
@@ -259,27 +255,23 @@ module.exports = function () {
       if (!exists) {
         Modely.knex.schema.createTable(Model._name, function (table) {
           // Add property columns
-          Object.keys(columns).forEach(function (key) {
-            table = processProperty(table, Model, key)
-          })
+          Object.keys(columns).forEach(key => { table = processProperty(table, Model, key) })
         }).then(function () {
           Modely.log.info('[Modely] Installed table "' + Model._name + '"')
           Modely.relationshipsManager.parse(Model._name).then(function () {
             Modely.models[Model._name].prototype._status = 'installed'
             resolve()
           })
-        }).catch(function (error) {
-          return reject(error)
         })
+        .catch(error => { return reject(error) })
       } else {
         return checkTable(Model).then(function () {
           return Modely.relationshipsManager.parse(Model._name).then(function () {
             Modely.models[Model._name].prototype._status = 'installed'
             resolve()
           })
-        }).catch(function (error) {
-          return reject(error)
         })
+        .catch(error => { return reject(error) })
       }
     })
   })

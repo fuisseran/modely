@@ -45,7 +45,7 @@ function assignTagDefaults(Model) {
  */
 function parseOriginalTags(originalTags, currentTags) {
   var result = []
-  originalTags.forEach(function (tag) {
+  originalTags.forEach(tag => {
     if (!_.findWhere(currentTags, tag)) {
       result.push(tag)
     }
@@ -58,7 +58,7 @@ function parseOriginalTags(originalTags, currentTags) {
  */
 function parseCurrentTags(currentTags, originalTags) {
   var result = []
-  currentTags.forEach(function (tag) {
+  currentTags.forEach(tag => {
     if (!_.findWhere(originalTags, tag)) {
       result.push(tag)
     }
@@ -70,12 +70,12 @@ function parseCurrentTags(currentTags, originalTags) {
  * Parses the tags to add to the Model and see if any need to be created
  */
 function parseTagsToAdd(tags) {
-  return new Promise(function (resolve) {
-    Promise.map(tags, function (tag) {
+  return new Promise(resolve => {
+    Promise.map(tags, tag => {
       if (typeof tag.id === 'undefined' || tag.id <= 0) {
         tag.name = slugify(tag.label)
         return Modely.knex.raw('SELECT * FROM tag WHERE tag_name = ?', [tag.name])
-        .then(function (queryResults) {
+        .then(queryResults => {
           if (queryResults.rows.length > 0) {
             tag.id = queryResults.rows[0].tag_id
             return null
@@ -83,9 +83,8 @@ function parseTagsToAdd(tags) {
           return tag
         }).catch(Modely.log.error)
       }
-    }).then(function (tagsToAdd) {
-      resolve(tagsToAdd.filter(function (element) { return element }))
     })
+    .then(tagsToAdd => { resolve(tagsToAdd.filter(element => { return element })) })
   })
 }
 
@@ -97,7 +96,7 @@ function getTagOperation(Model) {
   var currentTags
   var removeTags
   var addTags
-  return new Promise(function (resolve) {
+  return new Promise(resolve => {
     if (Model._action === 'create') {
       assignTagDefaults(Model)
     }
@@ -105,17 +104,17 @@ function getTagOperation(Model) {
     currentTags = Model._data.values._meta.tags || []
     removeTags = parseOriginalTags(originalTags, currentTags)
     addTags = parseCurrentTags(currentTags, originalTags)
-    parseTagsToAdd(addTags).then(function (createTags) {
+    parseTagsToAdd(addTags).then(createTags => {
       resolve({
-        create: createTags.filter(function (tag) {
+        create: createTags.filter(tag => {
           return typeof tag.id !== 'undefined' && tag.id > 0 ? null : tag
         }) || [],
         remove: removeTags,
-        add: addTags.filter(function (tag) {
-          return typeof tag.id !== 'undefined' && tag.id > 0 ? tag : null
+        add: addTags.filter(tag => { 
+          return typeof tag.id !== 'undefined' && tag.id > 0 ? tag : null 
         })
       })
-    }).catch(function () {
+    }).catch(() => {
       resolve({
         create: [],
         remove: [],
@@ -129,9 +128,7 @@ function getTagOperation(Model) {
  * Registers the required models in Modely
  */
 function registerModels() {
-  Object.keys(models).forEach(function (modelName) {
-    Modely.register(modelName, models[modelName])
-  })
+  Object.keys(models).forEach(modelName => { Modely.register(modelName, models[modelName]) })
 }
 
 /**
@@ -212,17 +209,21 @@ function afterLoad(Model, row) {
  */
 function beforeSave(Model) {
   if (Model._schema.taggable && (typeof Model._data.values._meta.tags !== 'undefined')) {
-    Model._pending.push(new Promise(function (resolve) {
-      getTagOperation(Model).then(function (tagChanges) {
+    Model._pending.push(new Promise(resolve => {
+      getTagOperation(Model).then(tagChanges => {
         Model._stash.tags = tagChanges
         resolve()
-      }).catch(function (error) {
+      }).catch(error => {
         delete Model._stash.tags
         Modely.log.error('An error occured while trying to process the tagging information for ' +
         '"%s"', Model._name)
         Modely.log.error(error)
       })
     }))
+  }
+  if (!Model._schema.taggable && Model._data.values._meta.tags !== undefined &&
+  Model._data.values._meta.tags.length > 0) {
+    Modely.log.debug('Tagging data found on a non taggable model: "%s"', Model._name)
   }
 }
 
@@ -236,7 +237,7 @@ function onSave(Model) {
     modelId = Model[Model._primary_key]
     modelName = Model._name
     // Delete removed tags from tag mappings table
-    tags.remove.forEach(function (tag) {
+    tags.remove.forEach(tag => {
       Model._pending_transactions.push(Model.
         _trx('tagmap')
         .where('tagmap_tag_id', tag.id)
@@ -245,12 +246,12 @@ function onSave(Model) {
         .del())
     })
     // Create tags needed and add mappings
-    tags.create.forEach(function (tag) {
+    tags.create.forEach(tag => {
       Model._pending_transactions.push(
         Model._trx.insert({
           tag_label: tag.label,
           tag_name: slugify(tag.label)
-        }, 'tag_id').into('tag').then(function (insertResult) {
+        }, 'tag_id').into('tag').then(insertResult => {
           return Model._trx.insert({
             tagmap_model_name: modelName,
             tagmap_model_id: modelId,
@@ -260,7 +261,7 @@ function onSave(Model) {
         )
     })
     // Build array or remaining tags to be added
-    tags.add.forEach(function (tag) {
+    tags.add.forEach(tag => {
       if (typeof tag.id !== 'undefined' && tag.id > 0) {
         mappingsToAdd.push({
           tagmap_model_name: modelName,
@@ -303,7 +304,5 @@ module.exports = function tagging(modelyReference) {
   Modely.on('Modely:BeforeSearch', beforeSearch)
   Modely.on('Modely:SearchRowParse', searchParse)
   Modely.on('afterRegistration', onRegister)
-  Modely.on('Model:tag:BeforeSave', function (Model) {
-    return Model
-  })
+  Modely.on('Model:tag:BeforeSave', Model => { return Model })
 }

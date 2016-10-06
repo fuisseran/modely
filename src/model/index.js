@@ -84,9 +84,7 @@ function processPending(action) {
   return new Promise(function (resolve, reject) {
     async.each(Model._pending,
       function pendingIterator(item, callback) {
-        item.then(function (err, result) {
-          callback(err, result)
-        })
+        item.then((err, result) => { callback(err, result) })
       },
       function pendingDone(err, results) {
         Model._pending = []
@@ -117,11 +115,11 @@ function pendingTransactions(action) {
   var Model = this
   Modely.emit('Model:' + Model._name + ':On' + action, Model)
   if (Model._pending_transactions.length > 0) {
-    return Promise.map(Model._pending_transactions, function (saveTransaction) {
+    return Promise.map(Model._pending_transactions, saveTransaction => {
       return saveTransaction
     })
   }
-  return new Promise(function (resolve) { resolve() })
+  return new Promise(resolve => { resolve() })
 }
 
 // Definiftions for the base model properties

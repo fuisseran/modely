@@ -3,9 +3,8 @@ var parsers = require('../parsers')
 
 var Modely = require('../')
 function getAllColumnsArray(Model) {
-  var columns = Object.keys(Model._columns).map(function (columnName) {
-    return Model._columns[columnName].full_name
-  })
+  var columns = Object.keys(Model._columns)
+    .map(columnName => { return Model._columns[columnName].full_name })
   return columns
 }
 function loadSingle(Model) {
@@ -39,7 +38,8 @@ function loadSingle(Model) {
           break
         default: // Should never happen!
       }
-    }).catch(function (error) {
+    })
+    .catch(error => {
       Modely.log.error(error)
       reject(error)
     })

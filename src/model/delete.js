@@ -1,5 +1,4 @@
 var Promise = require('bluebird')
-
 var Modely = require('../index')
 var utils = require('./util')
 
@@ -8,6 +7,7 @@ var utils = require('./util')
  * ?@param {integer} model_id - id of the model to delete
  */
 function deleteModel(modelId) {
+  // TODO: Endure model has been loaded so that all events can fire propley when it is deleted.
   var Model = this  // Reference to the model
   var id = modelId
   return new Promise(function (resolve, reject) {
@@ -27,19 +27,19 @@ function deleteModel(modelId) {
       return trx(Model._name)
       .where(Model._columns[Model._primary_key].name, id)
       .del()
-      .then(function () {
-        return utils.pendingTransactions(Model, 'Delete')
-      })
+      .then(() => { return utils.pendingTransactions(Model, 'Delete') })
       // .then(processRelationships)
       .catch(reject)
-    }).then(function () {
+    })
+    .then(() => {
       Model._action = null
       return resolve()
     })
-    .catch(function (error) {
+    .catch(error => {
       Modely.log.error(error)
       return reject(error)
-    }).finally(function () {
+    })
+    .finally(() => {
       Model._action = null
       return resolve()
     })

@@ -86,9 +86,7 @@ function addJoin(model, relatedFullName, params) {
 
 function getModelProperties(model) {
   var properties = []
-  Object.keys(model._columns).forEach(function (columnName) {
-    properties.push(columnName)
-  })
+  Object.keys(model._columns).forEach(columnName => { properties.push(columnName) })
   return properties
 }
 /**
@@ -229,9 +227,8 @@ function getColumns(model, params) {
   var modelPropertyRegEx = new RegExp('^' + modelProperties.join('$|^') + '$')
   // If there are no fields defined then grab the models fields
   if (params.columns.length === 0) {
-    Object.keys(model._columns).forEach(function (column) {
-      params.columns.push(model._columns[column].full_name)
-    })
+    Object.keys(model._columns)
+      .forEach(column => { params.columns.push(model._columns[column].full_name) })
   } else {
     Object.keys(params.columns).forEach(function (fieldIndex) {
       var field = params.columns[fieldIndex]
@@ -267,9 +264,7 @@ module.exports = function modelSearch(params, options) {
       }
     }
     model._query.select(params.columns)
-    params.join.forEach(function (join) {
-      model._query.joinRaw(join)
-    })
+    params.join.forEach(join => { model._query.joinRaw(join) })
     params.orderBy.forEach(function (item) {
       if (Array.isArray(item) && item.length < 3) {
         model._query.orderBy(item[0], item[1] || null)

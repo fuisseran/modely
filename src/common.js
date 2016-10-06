@@ -17,7 +17,7 @@ function applyCoreProperties(Model) {
     ['_trxData', null]
   ]
 
-  props.forEach(function (item) {
+  props.forEach(item => {
     Object.defineProperty(Model, item[0].toString(), {
       configurable: false,
       enumerable: false,
@@ -50,7 +50,7 @@ function LoggerQueue() {
   var self = this
   var types = ['warn', 'info', 'debug', 'error']
   self.queued = []
-  types.forEach(function (type) {
+  types.forEach(type => {
     self[type] = function () {
       self.queued.push({
         type: type,
@@ -58,8 +58,8 @@ function LoggerQueue() {
       })
     }
   })
-  self.processLog = function (logger) {
-    self.queued.forEach(function (queueItem) {
+  self.processLog = logger => {
+    self.queued.forEach(queueItem => {
       logger[queueItem.type].apply(this, queueItem.args)
     })
   }

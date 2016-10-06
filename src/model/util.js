@@ -63,16 +63,16 @@ function pendingTransactions(Model, action) {
       return saveTransaction
     })
   }
-  return new Promise(function (resolve) { resolve() })
+  return new Promise(resolve => { resolve() })
 }
 
 function mapModelProperties(Model) {
   var columns = Model._columns
   var values = Model._data.values
   var insertObj = {}
-  Object.keys(columns).forEach(function (columnKey) {
+  Object.keys(columns).forEach(columnKey => {
     var columnName = columns[columnKey].name
-    if (typeof values[columnName] !== 'undefined') {
+    if (values[columnName] !== undefined) {
       insertObj[columnName] = values[columnName]
     }
   })
@@ -82,7 +82,7 @@ function mapModelProperties(Model) {
 function parseOptions(model, options) {
   if (options) {
     if (options.transaction) {
-      model._trk = options.transaction
+      model._trx = options.transaction
     }
   }
 }

@@ -23,9 +23,9 @@ function loadTargetModel(args) {
   return new Promise(function (resolve, reject) {
     if (args.targetModel === null) {
       args.targetModel = new Modely.models[args.targetModelName](args.sourceModel.$user)
-      return args.targetModel.$read(args.targetModelId).catch(reject).then(function () {
-        return resolve(args)
-      })
+      return args.targetModel.$read(args.targetModelId)
+        .catch(reject)
+        .then(() => { return resolve(args) })
     }
     return resolve(args)
   })

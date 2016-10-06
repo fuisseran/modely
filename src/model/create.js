@@ -7,7 +7,7 @@ var parsers = require('../parsers')
 function executeInsertTransaction(model) {
   return model._trx(model._name)
   .insert(model._trxData, model._columns[model._primary_key].name)
-  .then(function (insertResponse) {
+  .then(insertResponse => {
     model[model._primary_key] = insertResponse[0]
     return utils.pendingTransactions(model, 'Save')
   })
@@ -41,30 +41,28 @@ module.exports = function createModel(properties, options) {
       // validate mdoel here
       if (Modely._trx) {
         return utils.pendingTransactions(Model, 'PreSaveTransaction')
-        .then(function () {
+        .then(() => {
           return executeInsertTransaction(Model)
         })
       } else {
         return Modely.knex.transaction(function (trx) {
           Model._trx = trx
           return utils.pendingTransactions(Model, 'PreSaveTransaction')
-          .then(function () {
-            return executeInsertTransaction(Model).catch(reject)
-          })
-        }).then(function () {
+          .then(() => { return executeInsertTransaction(Model).catch(reject) })
+        })
+        .then(() => {
           // Clear _pending_transations property
           Model._pending_transactions = []
           // Reload the model to get the meta data then resolve passing the Model back as the result
-          return Model.$read(Model.id).then(function () {
+          return Model.$read(Model.id)
+          .then(() => {
             Model._action = null
             return resolve(Model)
-          }).catch(function (error) {
+          }).catch(error => {
             Model._action = null
             return reject(error)
           })
-        }).catch(function (err) {
-          reject(err)
-        })
+        }).catch((err) => { reject(err) })
       }
     })
   })

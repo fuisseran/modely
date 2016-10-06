@@ -4,7 +4,7 @@ module.exports = function (Model, properties) {
     if (typeof Model._columns[property] !== 'undefined') {
       Model[property] = properties[property]
     } else {
-      if (property === '_meta') {
+      if (property === '_meta' && properties._meta !== null) {
         if (typeof Model._data.values._meta === 'undefined') {
           Model._data.values._meta = {}
         }

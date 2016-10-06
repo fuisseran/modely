@@ -52,7 +52,7 @@ function beforeRegistration(modelName, properties) {
   var columns = auditColumns(modelName)
   if (typeof properties.audit !== 'undefined'
   && properties.audit === true) {
-    Object.keys(columns).forEach(function (columnName) {
+    Object.keys(columns).forEach(columnName => {
       properties.columns[columnName] = columns[columnName]
     })
   }
