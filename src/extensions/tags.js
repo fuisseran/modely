@@ -157,26 +157,31 @@ function beforeLoad(Model) {
   }
 }
 
-function beforeSearch(params) {
-  if (params.taggable) {
-    params.query.select(Modely.knex.raw('(SELECT \'[\' || array_to_string( array_agg(' +
+function beforeSearch(Model, params) {
+  if (Model._schema.taggable) {
+    Model._query.select(Modely.knex.raw('(SELECT \'[\' || array_to_string( array_agg(' +
     '(\'{"id":\' || tag_id ||\',"label":"\'||tag_label||\'","name":"\'||tag_name||\'"}' +
     '\')), \',\')||\']\' FROM tag LEFT JOIN tagmap ON tag.tag_id = tagmap_tag_id ' +
-    'WHERE tagmap_model_id = ' + params.idColumnName + ' AND tagmap_model_name=\'' +
-     params.modelName + '\') as tags'))
+    'WHERE tagmap_model_id = ' + Model._columns[Model._primary_key].full_name + ' AND tagmap_model_name= ?) as tags',
+    [Model._name]))
   }
 }
 
-function searchParse(formattedRow, rowData) {
-  if (typeof rowData.tags !== 'undefined') {
-    try {
-      formattedRow._meta.tags = JSON.parse(rowData.tags)
-      formattedRow._meta.tags.error = null
-    } catch (error) {
-      formattedRow._meta.tags = []
-      formattedRow._meta.tags.error = error
+function searchParse(Model, data, row) {
+  if (Model._schema.taggable) {
+    if (typeof row.tags !== 'undefined' && row.tags !== null) {
+      try {
+        data._meta.tags = JSON.parse(row.tags.replace(/\\/g, '\\\\'))
+      } catch (err) {
+        //Modely.log.error('[MODELY] An error occured will trying to parse the tagging data on "%s"',
+        //Model._name)
+        //Modely.log.error(err)
+        //Modely.log.error(row.tags)
+      }
+      delete row.tags;
+    } else if (row.tags === null) {
+      data._meta.tags = []
     }
-    delete rowData.tags
   }
 }
 
@@ -195,8 +200,8 @@ function afterLoad(Model, row) {
       } catch (err) {
         Modely.log.error('[MODELY] An error occured will trying to parse the tagging data on "%s"',
         Model._name)
-        Model.log.error(err)
-        Model.log.error(row.tags)
+        Modely.log.error(err)
+        Modely.log.error(row.tags)
       }
     } else if (row.tags === null) {
       Model._row_cache._meta.tags = []
@@ -301,8 +306,8 @@ module.exports = function tagging(modelyReference) {
   Modely.on('Model:*:BeforeSave', beforeSave)
   Modely.on('Model:*:OnSave', onSave)
   Modely.on('Model:*:OnDelete', onDelete)
-  Modely.on('Modely:BeforeSearch', beforeSearch)
-  Modely.on('Modely:SearchRowParse', searchParse)
+  Modely.on('Model:*:BeforeSearch', beforeSearch)
+  Modely.on('Model:*:BeforeSearchRowParse', searchParse)
   Modely.on('afterRegistration', onRegister)
   Modely.on('Model:tag:BeforeSave', Model => { return Model })
 }

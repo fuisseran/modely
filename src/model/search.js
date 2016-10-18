@@ -201,7 +201,7 @@ function parseResultRow(model, params, rowData) {
     }
   }
   var modelPrefix = model._name + '_'
-  Modely.emit('Model:' + model._name + ':BeforeSearchRowParse', formattedRow, rowData)
+  Modely.emit('Model:' + model._name + ':BeforeSearchRowParse', model, formattedRow, rowData)
   Object.keys(rowData).forEach(function (key) {
     var data = rowData[key]
     var property

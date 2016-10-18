@@ -52,9 +52,9 @@ module.exports = function readModel(params) {
   return new Promise(function (resolve, reject) {
     if (!isNaN(params) && !(params % 1)) {
       Model[Model._primary_key] = params
-      loadSingle(Model, params).then(resolve).catch(reject)
+      return loadSingle(Model, params).then(resolve).catch(reject)
     } else {
-      Model.$search(params).then(resolve).catch(reject)
+      return Model.$search(params).then(resolve).catch(reject)
     }
   })
 }
