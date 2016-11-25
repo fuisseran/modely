@@ -23,6 +23,8 @@ function BaseModel() {
   Object.defineProperties(_this, {
     _raw_properties: {
       enumerable: false,
+      configurable: true,
+      writable: true,
       value: null
     }
   })
@@ -78,7 +80,7 @@ function assignProperties(columns) {
   })
 }
 
-function processPending(action) {
+function processPending(Model, action) {
   var Model = this
   Modely.emit('Model:' + Model._name + ':Before' + action, Model)
   return new Promise(function (resolve, reject) {

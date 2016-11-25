@@ -173,12 +173,12 @@ function searchParse(Model, data, row) {
       try {
         data._meta.tags = JSON.parse(row.tags.replace(/\\/g, '\\\\'))
       } catch (err) {
-        //Modely.log.error('[MODELY] An error occured will trying to parse the tagging data on "%s"',
-        //Model._name)
-        //Modely.log.error(err)
-        //Modely.log.error(row.tags)
+        Modely.log.error('[MODELY] An error occured will trying to parse the tagging data on "%s"',
+        Model._name)
+        Modely.log.error(err)
+        Modely.log.error(row.tags)
       }
-      delete row.tags;
+      delete row.tags
     } else if (row.tags === null) {
       data._meta.tags = []
     }

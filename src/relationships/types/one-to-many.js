@@ -114,7 +114,7 @@ function oneToMany(modelName, args) {
         target: parsedArgs.target,
         join: function (knexObj) {
           if (typeof knekObj === 'undefined') {
-            return ' INNER JOIN ' + parsedArgs.target.model + ' ON "' + targetColumn.full_name
+            return ' LEFT OUTER JOIN ' + parsedArgs.target.model + ' ON "' + targetColumn.full_name
             .split('.').join('"."') + '" = "' + sourceColumn.full_name.split('.').join('"."') +
             '" '
           }
@@ -133,7 +133,7 @@ function oneToMany(modelName, args) {
           target: parsedArgs.target,
           join: function (knexObj) {
             if (typeof knekObj === 'undefined') {
-              return ' INNER JOIN ' + parsedArgs.source.model + ' ON "' + targetColumn.full_name
+              return ' LEFT OUTER JOIN ' + parsedArgs.source.model + ' ON "' + targetColumn.full_name
               .split('.').join('"."') + '" = "' + sourceColumn.full_name.split('.').join('"."') +
               '" '
             }

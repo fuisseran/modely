@@ -5,8 +5,10 @@ var utils = require('./util')
 /**
  * Deletes the model
  * ?@param {integer} model_id - id of the model to delete
+ *  
  */
 function deleteModel(modelId) {
+  // TODO: Need to get the transaction to appened to a passed transaction same as update and create
   // TODO: Endure model has been loaded so that all events can fire propley when it is deleted.
   var Model = this  // Reference to the model
   var id = modelId

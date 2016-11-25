@@ -39,10 +39,12 @@ module.exports = function createModel(properties, options) {
     // Process any changes to be made to the object before transactions begin.
     return Model.$processPending(Model, 'Save').then(function () {
       // validate mdoel here
-      if (Modely._trx) {
+      if (Model._trx) {
         return utils.pendingTransactions(Model, 'PreSaveTransaction')
         .then(() => {
           return executeInsertTransaction(Model)
+          .then(resolve)
+          .catch(error => reject(error))
         })
       } else {
         return Modely.knex.transaction(function (trx) {

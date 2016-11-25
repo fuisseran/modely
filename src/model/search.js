@@ -105,7 +105,7 @@ function getModelProperties(model) {
  *        value:
  *      },
  *      'or'
- *      [{},'or',{}]
+ *      [{},'or',{}] Curently not supported
  *    ]
  *    fields: [],
  *    limit:50,
@@ -119,6 +119,7 @@ function parseQueryString(str) {
 }
 
 function parseQuery(model, params) {
+  // TODO: this needs to be able to handle queries with (() AND ()) OR () currently doens't do that
   var modelProperties = getModelProperties(model)
   var modelPropertyRegEx = new RegExp('^' + modelProperties.join('$|^') + '$')
   var newWhereArray = []
@@ -136,7 +137,28 @@ function parseQuery(model, params) {
             whereItem = parseQueryString(queryItem)
         }
       } else if (Array.isArray(queryItem)) {
-        parseQuery()
+        var column;
+        var parts;
+        if (/\w\.\w/.test(queryItem.column)) {
+          parts = queryItem[0].split('.')
+          column = getColumnFullName(parts[0], parts[1])
+        } else {
+          column = getColumnFullName(model._name, queryItem[0])
+        }
+        switch (queryItem.length) {
+          case 2:
+            whereItem = new WhereObject({
+              column: column,
+              value: queryItem[1]
+            })
+            break
+          default:
+            whereItem = new WhereObject({
+              column: column,
+              op: queryItem[1],
+              value: queryItem[2]
+            })
+        }
       } else {
         if (Object.keys(queryItem).length === 1) {
           queryItem = {
@@ -237,6 +259,8 @@ function getColumns(model, params) {
       } else if (/\w\.\w/.test(field)) {
         params.columns[fieldIndex] = getRelatedColumnFullName(field)
         addJoin(model._name, params.columns[fieldIndex], params)
+      } else {
+        throw new Error(`InvalidField:${field}`)
       }
     })
   }
@@ -252,6 +276,7 @@ module.exports = function modelSearch(params, options) {
     var whereStatment = ''
     model._query = Modely.knex.from(model._name)
     formatParams(params)
+    Modely.emit('Model:' + model._name + ':BeforeSearchQueryParse', model, params)
     processedQuery = parseQuery(model, params)
     getColumns(model, params)
     Modely.emit('Model:' + model._name + ':BeforeSearch', model, params)
