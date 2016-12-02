@@ -13,6 +13,7 @@ function register(name, properties) {
     if (!name || !properties) {
       throw new Error('InvalidParamters')
     }
+
     // Normalise the model name needs to be looked at again
     // name = name
     // Emit event for before model registration
@@ -67,7 +68,7 @@ function register(name, properties) {
       })
       // Parse the columns
       parsers.columns(Modely.models[name], properties.columns)
-      // Define the Properties of the model.
+      // Define the Properties of the model
       Modely.emit('AfterRegistration', Modely.models[name])
       Modely.log.debug('[Modely] Registered "' + name + '" model')
       modelInstance = new Modely.models[name]()

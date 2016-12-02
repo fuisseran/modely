@@ -183,8 +183,10 @@ function parseQuery(model, params) {
             newWhereArray.push('OR')
           }
         }
-        newWhereArray.push(whereItem)
-        lastStatement = whereItem
+        if (whereItem) {
+          newWhereArray.push(whereItem)
+          lastStatement = whereItem
+        }
       } else {
         Modely.log.debug('[Modley] No property "%s" on model "%s"', queryItem.column, model._name)
       }
