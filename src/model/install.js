@@ -224,11 +224,18 @@ function checkTable(Model) {
             })
           }
         }).catch(function (err) {
+          if (err.routine && err.routine === 'check_for_column_name_collision') {
+            return checkIndexes(Model)
+            .then(() => resolve())
+          }
           Modely.log.error('[MODELY] An error occured while atempting to modify "%s"', Model._name)
+          if (err.message) {
+            Modely.log.error(err.message)
+          }
           Modely.log.error(JSON.stringify(err, null, 2))
         })
-        .then(() => { return checkIndexes(Model) })
-        .then(() => { return resolve() })
+        .then(() => checkIndexes(Model))
+        .then(() => resolve())
       }).catch(function (err) {
         Model.log.error('[MODELY] Unable to get table schema to check against')
         Model.log.error(err)
