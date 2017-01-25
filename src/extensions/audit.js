@@ -40,6 +40,9 @@ function auditColumns(modelName) {
 
 function beforePropertyRead(Model) {
   var timeStamp = (new Date()).toISOString().slice(0, 19).replace('T', ' ')
+  if (!Model.$user) {
+    throw new Error('MissingUserOnModel:' + Model._name)
+  }
   Model.modified_by = Model.$user.id
   Model.modified_on = timeStamp
   if (Model._action === 'create') {

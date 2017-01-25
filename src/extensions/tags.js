@@ -300,7 +300,7 @@ module.exports = function tagging(modelyReference) {
   Modely = modelyReference
   // Register the models required for tagging
   registerModels()
-  // Register events
+  // Register events these shoudl ony be registered on models that can have taggable = true
   Modely.on('Model:*:BeforeLoad', beforeLoad)
   Modely.on('Model:*:AfterLoad', afterLoad)
   Modely.on('Model:*:BeforeSave', beforeSave)

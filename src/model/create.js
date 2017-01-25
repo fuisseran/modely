@@ -23,6 +23,7 @@ module.exports = function createModel(properties, options) {
       parsers.properties(Model, properties)
       if (typeof Model[Model._primary_key] !== 'undefined') {
         // Check if an id has been assigned, if it has reject the create
+        Modely.log.error(`${Model._name}`)
         return reject(new Error('InvalidPropertySupplied'))
       }
     }

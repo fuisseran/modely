@@ -2,7 +2,11 @@
 Model manager for nodejs
 
 TODO:
+* [ ] Change from underscore '_' prefixes to '$'
+* [ ] Add comments
+* [ ] Rework the way events are fired and handled
 * [ ] Change the way audit works to a central audit table for all models
+* [ ] Add loading of related models by parameters passed to the read
 * [ ] Write unit tests
 * [ ] Add extends functionality to models
 * [ ] Write integration test

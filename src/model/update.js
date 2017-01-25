@@ -45,7 +45,7 @@ module.exports = function update(properties, options) {
       if (properties) {
         parsers.properties(Model, properties)
       }
-      Modely.emit('Model:' + Model._name + 'BeforePropertyRead', Model)
+      Modely.emit('Model:' + Model._name + ':BeforePropertyRead', Model)
       Model._trxData = Model.$mapModelProperties(Model)
       Model._status = 'update' // need to check which one to keep
       Model._action = 'update'
@@ -70,7 +70,7 @@ module.exports = function update(properties, options) {
           })
         )
       }
-      return Model.$processPending('Save').then(function (/* pendingResults*/) {
+      return Model.$processPending(Model, 'Save').then(function (/* pendingResults*/) {
         if (Model._trx) {
           return utils.pendingTransactions(Model, 'PreSaveTransaction')
           .then(function () {
@@ -81,12 +81,14 @@ module.exports = function update(properties, options) {
           Model._trx = trx
           return utils.pendingTransactions(Model, 'PreSaveTransaction')
             .then(() => { return executeUpdateTransaction(Model) })
-            .then(() => { return utils.pendingTransactions(Model, 'Save') })
+            .then(() => { 
+              return utils.pendingTransactions(Model, 'Save')
+            })
             .then(trx.commit)
             .catch(error => {
               Modely.log.error(error)
               trx.rollback()
-              return reject(error) 
+              return reject(error)
             })
         }).then(function () {
           Model._pending_transactions = []
@@ -97,7 +99,7 @@ module.exports = function update(properties, options) {
         })
       })
     }).catch(error => {
-      Model.log.error(error)
+      Modely.log.error(error)
       reject(error)
     })
   })

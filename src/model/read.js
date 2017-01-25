@@ -7,7 +7,7 @@ function getAllColumnsArray(Model) {
     .map(columnName => { return Model._columns[columnName].full_name })
   return columns
 }
-function loadSingle(Model) {
+function loadSingle(Model, args) {
   return new Promise(function (resolve, reject) {
     var fields = getAllColumnsArray(Model)
     var whereObject = { }
