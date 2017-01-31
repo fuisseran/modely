@@ -54,13 +54,15 @@ module.exports = function update(properties, options) {
       // validate here
       if (Object.keys(Model._trxData).length === 0) {
         if (Model._trx) {
-          return utils.pendingTransactions(Model, 'PreSaveTransaction')
+          return Model.$processPending(Model, 'Save')
+          .then(() => utils.pendingTransactions(Model, 'PreSaveTransaction'))
           .then(() => utils.pendingTransactions(Model, 'Save'))
           .then(() => resolve())
           .catch((error) => reject(error))
         }
         return Modely.knex.transaction(trx =>
-          utils.pendingTransactions(Model, 'PreSaveTransaction')
+          Model.$processPending(Model, 'Save')
+          .then(() => utils.pendingTransactions(Model, 'PreSaveTransaction'))
           .then(() => utils.pendingTransactions(Model, 'Save'))
           .then(trx.commit)
           .then(() => resolve(Model))
