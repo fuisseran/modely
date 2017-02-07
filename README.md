@@ -1,7 +1,8 @@
 # MODELY
-Model manager for nodejs
+Model manager for nodejs and postgresql
 
 TODO:
+* [ ] Add all event transaction to generic $eventQueue on model and create $drainQueue function
 * [ ] Change from underscore '_' prefixes to '$'
 * [ ] Add comments
 * [ ] Rework the way events are fired and handled

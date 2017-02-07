@@ -59,7 +59,7 @@ function parseOriginalTags(originalTags, currentTags) {
 function parseCurrentTags(currentTags, originalTags) {
   var result = []
   currentTags.forEach(tag => {
-    if (!_.findWhere(originalTags, tag)) {
+    if (originalTags.every((oTag) => tag.id !== oTag.id)) {
       result.push(tag)
     }
   })
@@ -111,7 +111,7 @@ function getTagOperation(Model) {
         }) || [],
         remove: removeTags,
         add: addTags.filter(tag => { 
-          return typeof tag.id !== 'undefined' && tag.id > 0 ? tag : null 
+          return typeof tag.id !== 'undefined' && tag.id > 0 ? tag : null
         })
       })
     }).catch(() => {
