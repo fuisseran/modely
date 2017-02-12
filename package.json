@@ -1,6 +1,6 @@
 {
   "name": "modely",
-  "version": "0.9.15",
+  "version": "0.9.16",
   "description": "Model manager for nodejs",
   "main": "index.js",
   "scripts": {
