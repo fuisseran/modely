@@ -142,8 +142,6 @@ function oneToMany(modelName, args) {
           }
         }
       }
-      Modely.log.debug('[Modely] Added "%s" relationship between "%s" and "%s"', args.type,
-      parsedArgs.source.model, parsedArgs.target.model)
     } else {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }

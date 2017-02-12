@@ -116,8 +116,6 @@ function manyToMany(modelName, args) {
     })
     Modely.register(mapModelName, modelProperties)
     addManyToManyRelationships(mapModelName, parsedArgs)
-    Modely.log.debug('[Modely] Added "%s" relationship between "%s" and "%s"', args.type, parsedArgs
-    .source.model, parsedArgs.target.model)
   } else {
     common.addToQueue(modelName, args)
   }

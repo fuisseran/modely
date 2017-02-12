@@ -70,7 +70,6 @@ function register(name, properties) {
       parsers.columns(Modely.models[name], properties.columns)
       // Define the Properties of the model
       Modely.emit('AfterRegistration', Modely.models[name])
-      Modely.log.debug('[Modely] Registered "' + name + '" model')
       modelInstance = new Modely.models[name]()
       if (Modely.connection_initialised) {
         return modelInstance.$install().then(resolve)

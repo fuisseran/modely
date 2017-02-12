@@ -120,9 +120,6 @@ function oneToOne(modelName, args) {
           targetColumn.fullname)
         }
       }
-      Modely.log.debug('[Modely] Added "one-to-one" relationship from "%s.%s" to "%s.%s"',
-      parsedArgs.source.model, parsedArgs.source.column, parsedArgs.target.model, parsedArgs
-      .target.column)
     } else {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }
@@ -142,9 +139,6 @@ function oneToOne(modelName, args) {
           targetColumn.full_name)
         }
       }
-      Modely.log.debug('[Modely] Added "one-to-one" relationship from "%s.%s" to "%s.%s"',
-      parsedArgs.target.model, parsedArgs.target.column, parsedArgs.source.model, parsedArgs
-      .source.column)
     } else {
       // Check the exisiting relationship if it is the same then do nothing, else produce a warning.
     }
