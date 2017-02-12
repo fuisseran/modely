@@ -69,7 +69,7 @@ function afterRegistration(Model) {
       configurable: false,
       value: true
     })
-    Modely.on('Model:' + Model.prototype._name + 'BeforePropertyRead', beforePropertyRead)
+    Modely.on('Model:' + Model.prototype._name + ':BeforePropertyRead', beforePropertyRead)
   }
 }
 module.exports = function audit(modelyReference) {
