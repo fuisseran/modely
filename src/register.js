@@ -21,7 +21,7 @@ function register(name, properties) {
     // process the model properties
     if (typeof Modely.models[name] === 'undefined') {
       // Create model generator function
-      Modely.models[name] = function (user) {
+      Modely.models[name] = function (user, options) {
         // Check the model name is not already registered
         if (!(this instanceof Modely.models[name])) {
           return new Modely.models[name](user)
@@ -30,7 +30,7 @@ function register(name, properties) {
         common.apply_core_properties(this, name, properties)
         // Assign user object to the model
         this.$user = user
-        this.super_()
+        this.super_(user, options)
       }
       // Assign name to the model
       Object.defineProperties(Modely.models[name].prototype, {

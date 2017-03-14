@@ -14,10 +14,10 @@ var Modely
 var basePropertyObject = {}
 var baseProperties
 
-function BaseModel() {
+function BaseModel(user, options) {
   var _this = this
   // Emit the OnInitialise event
-  Modely.emit('Model:' + _this._name + ':OnInitialise', _this)
+  Modely.emit('Model:' + _this._name + ':OnInitialise', _this, options)
   // Define the base properties for the Model Object
   _this.$assignProperties(_this._columns)
   Object.defineProperties(_this, {
